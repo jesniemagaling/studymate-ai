@@ -4,16 +4,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { signOut } from 'next-auth/react';
 
 export default function Navbar() {
   const { setTheme, theme } = useTheme();
   const router = useRouter();
 
-  const handleLogout = () => {
-    // remove login cookie
-    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+  const handleLogout = async () => {
+    await signOut({
+      redirect: false,
+    });
 
-    // redirect to login
     router.push('/login');
   };
 
