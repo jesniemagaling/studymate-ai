@@ -11,6 +11,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [reviewer, setReviewer] = useState('');
 
   const handleUpload = async () => {
     if (!file) return;
@@ -45,6 +46,23 @@ export default function UploadPage() {
 
     setText(data.text || 'No text extracted.');
     setLoading(false);
+  };
+
+  const handleGenerateReviewer = async () => {
+    if (!text) return;
+
+    const res = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to generate reviewer');
+      return;
+    }
+    setReviewer(data.reviewer);
   };
 
   return (
@@ -95,6 +113,20 @@ export default function UploadPage() {
               </h3>
               <Textarea value={text} readOnly className="h-64 resize-none" />
             </div>
+          )}
+
+          {!loading && text && (
+            <Button onClick={handleGenerateReviewer} className="w-full">
+              Generate Reviewer
+            </Button>
+          )}
+
+          {reviewer && (
+            <Textarea
+              value={reviewer}
+              readOnly
+              className="mt-4 h-64 resize-none"
+            />
           )}
         </CardContent>
       </Card>
