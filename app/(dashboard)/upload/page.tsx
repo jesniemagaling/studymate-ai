@@ -24,9 +24,25 @@ export default function UploadPage() {
     const res = await fetch('/api/pdf/upload', {
       method: 'POST',
       body: formData,
+      credentials: 'include',
     });
 
+    // HANDLE UNAUTHORIZED
+    if (res.status === 401) {
+      setLoading(false);
+      alert('Session expired. Please log in again.');
+      window.location.href = '/login';
+      return;
+    }
+
     const data = await res.json();
+
+    if (!res.ok) {
+      setLoading(false);
+      alert(data.error || 'Failed to upload PDF');
+      return;
+    }
+
     setText(data.text || 'No text extracted.');
     setLoading(false);
   };

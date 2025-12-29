@@ -8,22 +8,21 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const protectedRoutes = [
-    '/home',
-    '/upload',
-    '/library',
-    '/generate',
-    '/results',
-    '/analytics',
-  ];
-
-  const isProtected = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  if (isProtected && !token) {
+  // If no session, redirect to login
+  if (!token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: [
+    '/upload/:path*',
+    '/home/:path*',
+    '/library/:path*',
+    '/generate/:path*',
+    '/results/:path*',
+    '/analytics/:path*',
+  ],
+};
