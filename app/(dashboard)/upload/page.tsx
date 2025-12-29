@@ -117,7 +117,7 @@ export default function UploadPage() {
 
           {!loading && text && (
             <Button onClick={handleGenerateReviewer} className="w-full">
-              Generate Reviewer
+              {loading ? 'Generating...' : 'Generate Reviewer'}
             </Button>
           )}
 

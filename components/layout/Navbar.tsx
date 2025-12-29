@@ -1,27 +1,54 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { signOut } from 'next-auth/react';
 
+const navLinks = [
+  { label: 'Home', href: '/home' },
+  { label: 'Upload', href: '/upload' },
+  { label: 'Library', href: '/library' },
+  { label: 'Generate', href: '/generate' },
+  { label: 'Results', href: '/results' },
+  { label: 'Analytics', href: '/analytics' },
+];
+
 export default function Navbar() {
   const { setTheme, theme } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
-    await signOut({
-      redirect: false,
-    });
-
+    await signOut({ redirect: false });
     router.push('/login');
   };
 
   return (
     <nav className="flex items-center justify-between border-b px-6 py-4">
       {/* Left */}
-      <h1 className="font-bold text-lg">StudyMate AI</h1>
+      <div className="flex items-center gap-6">
+        <h1
+          className="cursor-pointer font-bold text-lg"
+          onClick={() => router.push('/home')}
+        >
+          StudyMate AI
+        </h1>
+
+        <div className="hidden md:flex items-center gap-2">
+          {navLinks.map((link) => (
+            <Button
+              key={link.href}
+              variant={pathname === link.href ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => router.push(link.href)}
+            >
+              {link.label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {/* Right */}
       <div className="flex items-center gap-2">
