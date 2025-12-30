@@ -2,13 +2,10 @@ import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
 
-import clientPromise from '@/lib/mongodb';
 import User from '@/models/User';
 
 const handler = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
   session: {
     strategy: 'jwt',
   },
@@ -30,24 +27,42 @@ const handler = NextAuth({
         if (!credentials?.email || !credentials.password) return null;
 
         const user = await User.findOne({ email: credentials.email });
-
         if (!user || !user.password) return null;
 
         const isValid = await bcrypt.compare(
           credentials.password,
           user.password
         );
-
         if (!isValid) return null;
 
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
         };
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.firstName = token.firstName as string;
+        session.user.lastName = token.lastName as string;
+      }
+      return session;
+    },
+  },
   pages: {
     signIn: '/login',
   },
