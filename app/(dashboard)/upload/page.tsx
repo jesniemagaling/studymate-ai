@@ -5,19 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, FileText } from 'lucide-react';
+import { UploadCloud, FileText, Loader2 } from 'lucide-react';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingUpload, setLoadingUpload] = useState(false);
+  const [loadingReviewer, setLoadingReviewer] = useState(false);
   const [reviewer, setReviewer] = useState('');
 
+  // UPLOAD PDF AND EXTRACT TEXT
   const handleUpload = async () => {
     if (!file) return;
 
-    setLoading(true);
+    setLoadingUpload(true);
     setText('');
+    setReviewer('');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -28,9 +31,8 @@ export default function UploadPage() {
       credentials: 'include',
     });
 
-    // HANDLE UNAUTHORIZED
     if (res.status === 401) {
-      setLoading(false);
+      setLoadingUpload(false);
       alert('Session expired. Please log in again.');
       window.location.href = '/login';
       return;
@@ -39,17 +41,20 @@ export default function UploadPage() {
     const data = await res.json();
 
     if (!res.ok) {
-      setLoading(false);
+      setLoadingUpload(false);
       alert(data.error || 'Failed to upload PDF');
       return;
     }
 
     setText(data.text || 'No text extracted.');
-    setLoading(false);
+    setLoadingUpload(false);
   };
 
+  // GENERATE REVIEWER USING AI
   const handleGenerateReviewer = async () => {
     if (!text) return;
+
+    setLoadingReviewer(true);
 
     const res = await fetch('/api/ai/generate', {
       method: 'POST',
@@ -58,10 +63,13 @@ export default function UploadPage() {
     });
 
     const data = await res.json();
+    setLoadingReviewer(false);
+
     if (!res.ok) {
       alert(data.error || 'Failed to generate reviewer');
       return;
     }
+
     setReviewer(data.reviewer);
   };
 
@@ -96,13 +104,20 @@ export default function UploadPage() {
             />
           </label>
 
-          {/* Action Button */}
+          {/* Upload Button */}
           <Button
             onClick={handleUpload}
-            disabled={!file || loading}
+            disabled={!file || loadingUpload}
             className="w-full"
           >
-            {loading ? 'Processing PDF...' : 'Upload & Extract Text'}
+            {loadingUpload ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Extracting text...
+              </span>
+            ) : (
+              'Upload & Extract Text'
+            )}
           </Button>
 
           {/* Extracted Text */}
@@ -111,22 +126,45 @@ export default function UploadPage() {
               <h3 className="text-sm font-semibold text-muted-foreground">
                 Extracted Text
               </h3>
-              <Textarea value={text} readOnly className="h-64 resize-none" />
+              <Textarea
+                value={text}
+                readOnly
+                className="h-64 resize-none bg-muted"
+              />
             </div>
           )}
 
-          {!loading && text && (
-            <Button onClick={handleGenerateReviewer} className="w-full">
-              {loading ? 'Generating...' : 'Generate Reviewer'}
+          {/* Generate Reviewer Button */}
+          {text && !reviewer && (
+            <Button
+              onClick={handleGenerateReviewer}
+              disabled={loadingReviewer}
+              className="w-full"
+            >
+              {loadingReviewer ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating reviewer...
+                </span>
+              ) : (
+                'Generate Reviewer'
+              )}
             </Button>
           )}
 
+          {/* Reviewer Output */}
           {reviewer && (
-            <Textarea
-              value={reviewer}
-              readOnly
-              className="mt-4 h-64 resize-none"
-            />
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                AI-Generated Reviewer
+              </h3>
+
+              <Textarea
+                value={reviewer}
+                readOnly
+                className="h-64 resize-none bg-muted"
+              />
+            </div>
           )}
         </CardContent>
       </Card>

@@ -10,7 +10,7 @@ export default function LibraryPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] justify-center px-4 py-8">
-      <Card className="w-full max-w-5xl">
+      <Card className="w-full max-w-5xl shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileText className="h-6 w-6 text-primary" />
@@ -19,16 +19,16 @@ export default function LibraryPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Empty State */}
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/40 px-6 py-14 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-background shadow-sm">
+          {/* EMPTY STATE */}
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/40 px-8 py-16 text-center transition hover:bg-muted/50">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-background shadow-sm border">
               <FileText className="h-8 w-8 text-muted-foreground" />
             </div>
 
-            <h3 className="text-base font-semibold">No PDFs uploaded yet</h3>
+            <h3 className="text-lg font-semibold">No PDFs uploaded yet</h3>
 
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Upload your study materials to generate reviewers, quizzes, and
+              Upload your documents to start generating reviewers, quizzes, and
               flashcards.
             </p>
 
@@ -41,10 +41,10 @@ export default function LibraryPage() {
             </Button>
           </div>
 
-          {/* Future: PDF List */}
-          {/*
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            PDF cards go here
+          {/* FUTURE: PDF LIST SECTION */}
+          {/* 
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            PDF cards will go here
           </div>
           */}
         </CardContent>
