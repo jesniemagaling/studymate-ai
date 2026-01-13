@@ -18,6 +18,9 @@ export default function UploadPage() {
   const [loadingReviewer, setLoadingReviewer] = useState(false);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
 
+  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [loadingFlashcards, setLoadingFlashcards] = useState(false);
+
   // PDF UPLOAD & TEXT EXTRACTION
   const handleUpload = async () => {
     if (!file) return;
@@ -86,6 +89,24 @@ export default function UploadPage() {
     setQuiz(data.questions);
   };
 
+  // GENERATE FLASHCARDS (NO OPENAI)
+  const generateFlashcards = async () => {
+    setLoadingFlashcards(true);
+
+    const res = await fetch('/api/ai/flashcards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    const data = await res.json();
+    setLoadingFlashcards(false);
+
+    if (!res.ok) return alert(data.error);
+
+    setFlashcards(data.flashcards);
+  };
+
   // SAVE REVIEWER TO DATABASE
   const saveReviewer = async () => {
     const res = await fetch('/api/results/save', {
@@ -120,6 +141,24 @@ export default function UploadPage() {
     if (!res.ok) return alert(data.error);
 
     alert('Quiz saved!');
+  };
+
+  // SAVE FLASHCARDS TO DATABASE
+  const saveFlashcards = async () => {
+    const res = await fetch('/api/results/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        type: 'flashcards',
+        content: flashcards,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return alert(data.error);
+
+    alert('Flashcards saved!');
   };
 
   return (
@@ -265,6 +304,54 @@ export default function UploadPage() {
                   </ul>
                 </div>
               ))}
+            </section>
+          )}
+
+          {/* GENERATE FLASHCARDS */}
+          {text && (
+            <Button
+              onClick={generateFlashcards}
+              disabled={loadingFlashcards}
+              className="w-full"
+              variant="secondary"
+            >
+              {loadingFlashcards ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating flashcards...
+                </span>
+              ) : (
+                'Generate Flashcards'
+              )}
+            </Button>
+          )}
+
+          {/* FLASHCARDS PREVIEW */}
+          {flashcards.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  Generated Flashcards
+                </h3>
+
+                <Button size="sm" onClick={saveFlashcards}>
+                  Save Flashcards
+                </Button>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {flashcards.map((card, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-lg p-4 bg-muted/40"
+                  >
+                    <p className="font-semibold">{card.front}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {card.back}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </section>
           )}
         </CardContent>
