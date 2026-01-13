@@ -1,43 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { connectDB } from '@/lib/db';
-import SavedContent from '@/models/SavedContent';
+import Result from '@/models/Result';
+import { debug } from '@/lib/debug';
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   if (!token) {
+    debug('Unauthorized request to /results/save');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  try {
-    const { content, pdfName } = await req.json();
+  const { title, content, type } = await req.json();
 
-    if (!content) {
-      return NextResponse.json(
-        { error: 'No content provided' },
-        { status: 400 }
-      );
-    }
+  debug('Incoming Save Request:', { userId: token.id, title, type });
 
-    await connectDB();
-
-    const saved = await SavedContent.create({
-      userId: token.id,
-      pdfName: pdfName || 'Unknown PDF',
-      type: 'reviewer',
-      content,
-    });
-
-    return NextResponse.json({ message: 'Reviewer saved', saved });
-  } catch (error) {
-    console.error('SAVE ERROR:', error);
-    return NextResponse.json(
-      { error: 'Failed to save reviewer' },
-      { status: 500 }
-    );
+  if (!content || !type) {
+    debug('Missing fields:', { content, type });
+    return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
   }
+
+  await connectDB();
+  debug('DB connected');
+
+  const newResult = await Result.create({
+    userId: token.id,
+    title: title || 'Untitled Result',
+    content,
+    type,
+  });
+
+  debug('Saved Result:', newResult);
+
+  return NextResponse.json({ message: 'Saved', result: newResult });
 }
