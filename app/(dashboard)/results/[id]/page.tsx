@@ -1,11 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Copy, Trash2, FileText } from 'lucide-react';
+import {
+  ArrowLeft,
+  Copy,
+  Trash2,
+  FileText,
+  BookOpen,
+  ListChecks,
+  Download,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function ResultViewerPage() {
   const router = useRouter();
@@ -15,9 +25,12 @@ export default function ResultViewerPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch the result
+  // Reference for PDF content
+  const pdfRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch the result from backend
   useEffect(() => {
-    const loadResult = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch(`/api/results/get/${id}`, {
           method: 'GET',
@@ -31,18 +44,23 @@ export default function ResultViewerPage() {
         }
 
         setResult(data.result);
-      } catch (err) {
+      } catch (error) {
         toast.error('Failed to fetch result');
       } finally {
         setLoading(false);
       }
     };
 
-    loadResult();
+    fetchData();
   }, [id]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(result?.content || '');
+    if (!result?.content) return;
+    navigator.clipboard.writeText(
+      typeof result.content === 'string'
+        ? result.content
+        : JSON.stringify(result.content, null, 2)
+    );
     toast.success('Copied to clipboard!');
   };
 
@@ -61,7 +79,33 @@ export default function ResultViewerPage() {
     }
 
     toast.success('Deleted successfully');
-    router.push('/dashboard/results');
+    router.push('/results');
+  };
+
+  // EXPORT TO PDF
+  const handleExportPDF = async () => {
+    if (!pdfRef.current) return;
+
+    toast.loading('Generating PDF...', { id: 'pdf' });
+
+    // capture the content
+    const canvas = await html2canvas(pdfRef.current, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+    pdf.save(`${result.title || 'StudyMateAI-Result'}.pdf`);
+
+    toast.success('PDF downloaded!', { id: 'pdf' });
   };
 
   if (loading) {
@@ -83,12 +127,13 @@ export default function ResultViewerPage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] justify-center px-4 py-8">
       <Card className="w-full max-w-5xl shadow-md">
+        {/* HEADER */}
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push('/dashboard/results')}
+              onClick={() => router.push('/results')}
             >
               <ArrowLeft />
             </Button>
@@ -99,10 +144,13 @@ export default function ResultViewerPage() {
             </CardTitle>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleCopy}>
               <Copy className="h-4 w-4 mr-1" /> Copy
+            </Button>
+
+            <Button variant="secondary" size="sm" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-1" /> Export PDF
             </Button>
 
             <Button variant="destructive" size="sm" onClick={handleDelete}>
@@ -111,10 +159,76 @@ export default function ResultViewerPage() {
           </div>
         </CardHeader>
 
-        <CardContent>
-          <p className="whitespace-pre-wrap leading-relaxed text-sm">
-            {result.content}
-          </p>
+        {/* CONTENT WRAPPER FOR PDF EXPORT */}
+        <CardContent ref={pdfRef} className="space-y-6">
+          <div className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-primary border">
+            {result.type.toUpperCase()}
+          </div>
+
+          {/* REVIEWER DISPLAY */}
+          {result.type === 'reviewer' && (
+            <pre className="whitespace-pre-wrap bg-muted rounded-lg p-4 leading-relaxed text-sm">
+              {result.content}
+            </pre>
+          )}
+
+          {/* QUIZ DISPLAY */}
+          {result.type === 'quiz' && (
+            <div className="space-y-4">
+              {result.content.map((q: any, i: number) => (
+                <div key={i} className="border rounded-lg p-4 bg-muted/40">
+                  <p className="font-semibold mb-2">
+                    {i + 1}. {q.question}
+                  </p>
+
+                  <div className="ml-4 space-y-1">
+                    {q.options?.map((opt: string, index: number) => (
+                      <p key={index} className="text-sm text-muted-foreground">
+                        • {opt}
+                      </p>
+                    ))}
+                  </div>
+
+                  <p className="mt-2 text-xs text-primary">
+                    Answer: {q.answer}
+                  </p>
+                </div>
+              ))}
+
+              <Button
+                className="mt-2 w-full flex gap-2"
+                onClick={() => router.push(`/quiz/${id}`)}
+              >
+                <ListChecks className="h-4 w-4" /> Start Quiz Practice
+              </Button>
+            </div>
+          )}
+
+          {/* FLASHCARDS */}
+          {result.type === 'flashcards' && (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                {result.content.map((card: any, index: number) => (
+                  <div
+                    key={index}
+                    className="border p-4 bg-muted/40 rounded-lg"
+                  >
+                    <p className="font-semibold">{card.front}</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {card.back}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                className="mt-2 w-full flex gap-2"
+                onClick={() => router.push(`/study/${id}`)}
+              >
+                <BookOpen className="h-4 w-4" /> Study Flashcards
+              </Button>
+            </>
+          )}
 
           <p className="mt-6 text-xs text-muted-foreground">
             Saved on: {new Date(result.createdAt).toLocaleString()}
