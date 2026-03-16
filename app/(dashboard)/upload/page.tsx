@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, FileText, Loader2, ListChecks } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { UploadCloud, FileText, Loader2, ListChecks } from "lucide-react";
+import { toast } from "sonner";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
 
-  const [text, setText] = useState('');
-  const [reviewer, setReviewer] = useState('');
+  const [text, setText] = useState("");
+  const [reviewer, setReviewer] = useState("");
   const [quiz, setQuiz] = useState<any[]>([]);
 
   const [loadingUpload, setLoadingUpload] = useState(false);
@@ -23,142 +24,218 @@ export default function UploadPage() {
 
   // PDF UPLOAD & TEXT EXTRACTION
   const handleUpload = async () => {
-    if (!file) return;
-
-    setLoadingUpload(true);
-    setReviewer('');
-    setQuiz([]);
-    setText('');
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const res = await fetch('/api/pdf/upload', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include',
-    });
-
-    if (res.status === 401) {
-      alert('Session expired. Please log in again.');
-      window.location.href = '/login';
+    if (!file) {
+      toast.error("Please select a PDF file first.");
       return;
     }
 
-    const data = await res.json();
-    setLoadingUpload(false);
+    setLoadingUpload(true);
+    setReviewer("");
+    setQuiz([]);
+    setText("");
+    setFlashcards([]);
 
-    if (!res.ok) return alert(data.error || 'Failed to extract text');
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    setText(data.text);
+      const res = await fetch("/api/pdf/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to extract text");
+        return;
+      }
+
+      setText(data.text);
+      toast.success("PDF uploaded and text extracted.");
+    } catch {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setLoadingUpload(false);
+    }
   };
 
   // GENERATE REVIEWER
   const generateReviewer = async () => {
+    if (!text) {
+      toast.error("No extracted text found. Upload a PDF first.");
+      return;
+    }
+
     setLoadingReviewer(true);
 
-    const res = await fetch('/api/ai/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
-    const data = await res.json();
-    setLoadingReviewer(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) return alert(data.error || 'Failed to generate reviewer');
+      if (!res.ok) {
+        toast.error(data.error || "Failed to generate reviewer");
+        return;
+      }
 
-    setReviewer(data.reviewer);
+      setReviewer(data.reviewer);
+      toast.success("Reviewer generated successfully.");
+    } catch {
+      toast.error("Failed to generate reviewer. Please try again.");
+    } finally {
+      setLoadingReviewer(false);
+    }
   };
 
   // GENERATE QUIZ (NO OPENAI)
   const generateQuiz = async () => {
+    if (!text) {
+      toast.error("No extracted text found. Upload a PDF first.");
+      return;
+    }
+
     setLoadingQuiz(true);
 
-    const res = await fetch('/api/ai/quiz', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
+    try {
+      const res = await fetch("/api/ai/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
-    const data = await res.json();
-    setLoadingQuiz(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) return alert(data.error || 'Failed to generate quiz');
+      if (!res.ok) {
+        toast.error(data.error || "Failed to generate quiz");
+        return;
+      }
 
-    setQuiz(data.questions);
+      setQuiz(data.questions);
+      toast.success("Quiz generated successfully.");
+    } catch {
+      toast.error("Failed to generate quiz. Please try again.");
+    } finally {
+      setLoadingQuiz(false);
+    }
   };
 
   // GENERATE FLASHCARDS (NO OPENAI)
   const generateFlashcards = async () => {
+    if (!text) {
+      toast.error("No extracted text found. Upload a PDF first.");
+      return;
+    }
+
     setLoadingFlashcards(true);
 
-    const res = await fetch('/api/ai/flashcards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
+    try {
+      const res = await fetch("/api/ai/flashcards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
-    const data = await res.json();
-    setLoadingFlashcards(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) return alert(data.error);
+      if (!res.ok) {
+        toast.error(data.error || "Failed to generate flashcards");
+        return;
+      }
 
-    setFlashcards(data.flashcards);
+      setFlashcards(data.flashcards);
+      toast.success("Flashcards generated successfully.");
+    } catch {
+      toast.error("Failed to generate flashcards. Please try again.");
+    } finally {
+      setLoadingFlashcards(false);
+    }
   };
 
   // SAVE REVIEWER TO DATABASE
   const saveReviewer = async () => {
-    const res = await fetch('/api/results/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        type: 'reviewer',
-        content: reviewer,
-      }),
-    });
+    try {
+      const res = await fetch("/api/results/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          type: "reviewer",
+          content: reviewer,
+        }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save reviewer");
+        return;
+      }
 
-    alert('Reviewer saved!');
+      toast.success("Reviewer saved!");
+    } catch {
+      toast.error("Failed to save reviewer. Please try again.");
+    }
   };
 
   // SAVE QUIZ TO DATABASE
   const saveQuiz = async () => {
-    const res = await fetch('/api/results/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        type: 'quiz',
-        content: quiz,
-      }),
-    });
+    try {
+      const res = await fetch("/api/results/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          type: "quiz",
+          content: quiz,
+        }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save quiz");
+        return;
+      }
 
-    alert('Quiz saved!');
+      toast.success("Quiz saved!");
+    } catch {
+      toast.error("Failed to save quiz. Please try again.");
+    }
   };
 
   // SAVE FLASHCARDS TO DATABASE
   const saveFlashcards = async () => {
-    const res = await fetch('/api/results/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        type: 'flashcards',
-        content: flashcards,
-      }),
-    });
+    try {
+      const res = await fetch("/api/results/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          type: "flashcards",
+          content: flashcards,
+        }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save flashcards");
+        return;
+      }
 
-    alert('Flashcards saved!');
+      toast.success("Flashcards saved!");
+    } catch {
+      toast.error("Failed to save flashcards. Please try again.");
+    }
   };
 
   return (
@@ -179,7 +256,7 @@ export default function UploadPage() {
           >
             <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
             <p className="text-sm font-medium">
-              {file ? file.name : 'Click to upload a PDF file'}
+              {file ? file.name : "Click to upload a PDF file"}
             </p>
             <p className="text-xs text-muted-foreground">PDF files only</p>
 
@@ -204,7 +281,7 @@ export default function UploadPage() {
                 Extracting text...
               </span>
             ) : (
-              'Upload & Extract Text'
+              "Upload & Extract Text"
             )}
           </Button>
 
@@ -235,7 +312,7 @@ export default function UploadPage() {
                   Generating reviewer...
                 </span>
               ) : (
-                'Generate Reviewer'
+                "Generate Reviewer"
               )}
             </Button>
           )}
@@ -321,7 +398,7 @@ export default function UploadPage() {
                   Generating flashcards...
                 </span>
               ) : (
-                'Generate Flashcards'
+                "Generate Flashcards"
               )}
             </Button>
           )}

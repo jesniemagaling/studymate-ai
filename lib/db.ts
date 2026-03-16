@@ -1,9 +1,10 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI_DIRECT = process.env.MONGODB_URI_DIRECT;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define MONGODB_URI in .env.local');
+  throw new Error("Please define MONGODB_URI in .env.local");
 }
 
 let cached = (global as any).mongoose;
@@ -12,15 +13,52 @@ if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
+function isMongoDnsLookupError(error: unknown) {
+  const e = error as { code?: string; syscall?: string };
+  const dnsErrorCodes = ["ECONNREFUSED", "ENOTFOUND", "ENODATA", "EAI_AGAIN"];
+  const dnsSyscalls = ["querySrv", "getaddrinfo"];
+
+  return Boolean(
+    e?.code &&
+    e?.syscall &&
+    dnsErrorCodes.includes(e.code) &&
+    dnsSyscalls.includes(e.syscall),
+  );
+}
+
 export async function connectDB() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      bufferCommands: false,
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 10000,
+      })
+      .catch(async (error) => {
+        if (isMongoDnsLookupError(error) && MONGODB_URI_DIRECT) {
+          return mongoose.connect(MONGODB_URI_DIRECT, {
+            bufferCommands: false,
+            serverSelectionTimeoutMS: 10000,
+          });
+        }
+
+        throw error;
+      });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+
+    if (isMongoDnsLookupError(error)) {
+      throw new Error(
+        "MongoDB hostname lookup failed. Your MONGODB_URI may be invalid/outdated, or DNS/network is blocking lookup. Copy a fresh URI from Atlas and optionally set MONGODB_URI_DIRECT as a non-SRV mongodb:// URI.",
+      );
+    }
+
+    throw error;
+  }
 }

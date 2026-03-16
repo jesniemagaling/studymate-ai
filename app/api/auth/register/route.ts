@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
-import { connectDB } from '@/lib/db';
-import User from '@/models/User';
+import { NextResponse } from "next/server";
+import bcrypt from "bcrypt";
+import { connectDB } from "@/lib/db";
+import User from "@/models/User";
 
 export async function POST(req: Request) {
   try {
@@ -10,8 +10,8 @@ export async function POST(req: Request) {
     // Validate input
     if (!firstName || !lastName || !email || !password) {
       return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
+        { message: "All fields are required" },
+        { status: 400 },
       );
     }
 
@@ -21,8 +21,8 @@ export async function POST(req: Request) {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Email is already registered' },
-        { status: 400 }
+        { message: "Email is already registered" },
+        { status: 400 },
       );
     }
 
@@ -38,14 +38,32 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(
-      { message: 'Account created successfully' },
-      { status: 201 }
+      { message: "Account created successfully" },
+      { status: 201 },
     );
   } catch (error) {
-    console.error('Register error:', error);
+    console.error("Register error:", error);
+
+    if (error instanceof Error) {
+      const isMongoConnectionError =
+        error.message.includes("MongoDB") ||
+        error.message.includes("querySrv") ||
+        error.message.includes("ENOTFOUND") ||
+        error.message.includes("ECONNREFUSED");
+
+      if (isMongoConnectionError) {
+        return NextResponse.json({ message: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json(
+        { message: "Something went wrong" },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
+      { message: "Something went wrong" },
+      { status: 500 },
     );
   }
 }
