@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText, UploadCloud } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FileText, UploadCloud } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function LibraryPage() {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] justify-center px-4 py-8">
-      <Card className="w-full max-w-5xl shadow-md">
+    <section className="space-y-6" aria-label="PDF library">
+      <Card className="w-full border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileText className="h-6 w-6 text-primary" />
@@ -19,36 +19,31 @@ export default function LibraryPage() {
         </CardHeader>
 
         <CardContent>
-          {/* EMPTY STATE */}
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/40 px-8 py-16 text-center transition hover:bg-muted/50">
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-background shadow-sm border">
-              <FileText className="h-8 w-8 text-muted-foreground" />
+          <div className="relative overflow-hidden rounded-xl border border-dashed bg-muted/30 px-8 py-16 text-center">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.98_0_0),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,oklch(0.24_0_0),transparent_60%)]" />
+            <div className="relative flex flex-col items-center justify-center">
+              <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border bg-background shadow-sm">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+
+              <h3 className="text-lg font-semibold">No PDFs uploaded yet</h3>
+
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                Upload your documents to start generating reviewers, quizzes,
+                and flashcards.
+              </p>
+
+              <Button
+                className="mt-6 flex items-center gap-2"
+                onClick={() => router.push("/upload")}
+              >
+                <UploadCloud className="h-4 w-4" />
+                Upload PDF
+              </Button>
             </div>
-
-            <h3 className="text-lg font-semibold">No PDFs uploaded yet</h3>
-
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Upload your documents to start generating reviewers, quizzes, and
-              flashcards.
-            </p>
-
-            <Button
-              className="mt-6 flex items-center gap-2"
-              onClick={() => router.push('/upload')}
-            >
-              <UploadCloud className="h-4 w-4" />
-              Upload PDF
-            </Button>
           </div>
-
-          {/* FUTURE: PDF LIST SECTION */}
-          {/* 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            PDF cards will go here
-          </div>
-          */}
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }

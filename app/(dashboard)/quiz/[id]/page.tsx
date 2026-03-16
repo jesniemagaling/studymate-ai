@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { ArrowLeft, CircleCheck } from "lucide-react";
 
 type QuizQuestion = {
   question: string;
@@ -20,13 +22,34 @@ export default function QuizPlayer() {
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!params?.id) return;
 
-    fetch(`/api/results/${params.id}`)
-      .then((res) => res.json())
-      .then((data) => setQuiz(data.result?.content || []));
+    const loadQuiz = async () => {
+      setLoading(true);
+
+      try {
+        const res = await fetch(`/api/results/get/${params.id}`, {
+          credentials: "include",
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          toast.error(data.error || "Failed to load quiz result.");
+          return;
+        }
+
+        setQuiz(data.result?.content || []);
+      } catch {
+        toast.error("Failed to load quiz result.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuiz();
   }, [params?.id]);
 
   const current = quiz[index];
@@ -46,31 +69,57 @@ export default function QuizPlayer() {
     }
   };
 
-  if (!current && !finished)
-    return <div className="p-8 text-center">Loading quiz...</div>;
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        Loading quiz...
+      </div>
+    );
+  }
+
+  if (!quiz.length) {
+    return (
+      <div className="space-y-4 py-16 text-center">
+        <p className="text-muted-foreground">
+          No quiz data found for this result.
+        </p>
+        <Button variant="outline" onClick={() => router.push("/results")}>
+          Back to Results
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] justify-center px-4 py-8">
-      <Card className="w-full max-w-3xl">
-        <CardHeader>
+    <section className="space-y-6" aria-label="Quiz practice">
+      <Card className="w-full max-w-3xl border-border/60 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Quiz Practice</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/results")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {!finished && current ? (
             <>
-              <p className="font-semibold">
+              <p className="text-sm font-semibold text-muted-foreground">
                 Question {index + 1} / {quiz.length}
               </p>
 
-              <p className="text-lg">{current.question}</p>
+              <p className="text-lg font-medium">{current.question}</p>
 
               <div className="space-y-2">
                 {current.options.map((opt) => (
                   <Button
                     key={opt}
-                    variant={selected === opt ? 'default' : 'secondary'}
-                    className="w-full justify-start"
+                    variant={selected === opt ? "default" : "secondary"}
+                    className="w-full justify-start whitespace-normal"
                     onClick={() => setSelected(opt)}
                   >
                     {opt}
@@ -78,20 +127,29 @@ export default function QuizPlayer() {
                 ))}
               </div>
 
-              <Button className="w-full mt-4" onClick={submitAnswer}>
+              <Button
+                className="mt-4 w-full"
+                onClick={submitAnswer}
+                disabled={!selected}
+              >
                 Submit
               </Button>
             </>
           ) : (
             <>
-              <p className="text-center text-2xl font-bold">Quiz Completed!</p>
-              <p className="text-center text-lg">
+              <div className="flex items-center justify-center gap-2 text-primary">
+                <CircleCheck className="h-5 w-5" />
+                <p className="text-center text-2xl font-bold">
+                  Quiz Completed!
+                </p>
+              </div>
+              <p className="text-center text-lg font-semibold">
                 Score: {score} / {quiz.length}
               </p>
 
               <Button
-                className="w-full mt-4"
-                onClick={() => router.push('/results')}
+                className="mt-4 w-full"
+                onClick={() => router.push("/results")}
               >
                 Back to Results
               </Button>
@@ -99,6 +157,6 @@ export default function QuizPlayer() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }

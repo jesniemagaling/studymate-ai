@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Copy,
@@ -12,10 +12,10 @@ import {
   BookOpen,
   ListChecks,
   Download,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+} from "lucide-react";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default function ResultViewerPage() {
   const router = useRouter();
@@ -33,19 +33,19 @@ export default function ResultViewerPage() {
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/results/get/${id}`, {
-          method: 'GET',
-          credentials: 'include',
+          method: "GET",
+          credentials: "include",
         });
 
         const data = await res.json();
         if (!res.ok) {
-          toast.error(data.error || 'Failed to load result');
+          toast.error(data.error || "Failed to load result");
           return;
         }
 
         setResult(data.result);
       } catch (error) {
-        toast.error('Failed to fetch result');
+        toast.error("Failed to fetch result");
       } finally {
         setLoading(false);
       }
@@ -57,55 +57,55 @@ export default function ResultViewerPage() {
   const handleCopy = () => {
     if (!result?.content) return;
     navigator.clipboard.writeText(
-      typeof result.content === 'string'
+      typeof result.content === "string"
         ? result.content
-        : JSON.stringify(result.content, null, 2)
+        : JSON.stringify(result.content, null, 2),
     );
-    toast.success('Copied to clipboard!');
+    toast.success("Copied to clipboard!");
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this result?')) return;
+    if (!window.confirm("Are you sure you want to delete this result?")) return;
 
     const res = await fetch(`/api/results/delete/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
+      method: "DELETE",
+      credentials: "include",
     });
 
     const data = await res.json();
     if (!res.ok) {
-      toast.error(data.error || 'Failed to delete');
+      toast.error(data.error || "Failed to delete");
       return;
     }
 
-    toast.success('Deleted successfully');
-    router.push('/results');
+    toast.success("Deleted successfully");
+    router.push("/results");
   };
 
   // EXPORT TO PDF
   const handleExportPDF = async () => {
     if (!pdfRef.current) return;
 
-    toast.loading('Generating PDF...', { id: 'pdf' });
+    toast.loading("Generating PDF...", { id: "pdf" });
 
     // capture the content
     const canvas = await html2canvas(pdfRef.current, {
       scale: 2,
-      backgroundColor: '#ffffff',
+      backgroundColor: "#ffffff",
     });
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
 
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
 
-    pdf.save(`${result.title || 'StudyMateAI-Result'}.pdf`);
+    pdf.save(`${result.title || "StudyMateAI-Result"}.pdf`);
 
-    toast.success('PDF downloaded!', { id: 'pdf' });
+    toast.success("PDF downloaded!", { id: "pdf" });
   };
 
   if (loading) {
@@ -125,22 +125,22 @@ export default function ResultViewerPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] justify-center px-4 py-8">
-      <Card className="w-full max-w-5xl shadow-md">
-        {/* HEADER */}
+    <section className="space-y-6" aria-label="Result details">
+      <Card className="w-full max-w-5xl border-border/60 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push('/results')}
+              onClick={() => router.push("/results")}
+              aria-label="Back to results"
             >
               <ArrowLeft />
             </Button>
 
             <CardTitle className="flex items-center gap-2 text-xl font-semibold">
               <FileText className="h-6 w-6 text-primary" />
-              {result.title || 'Generated Result'}
+              {result.title || "Generated Result"}
             </CardTitle>
           </div>
 
@@ -159,21 +159,18 @@ export default function ResultViewerPage() {
           </div>
         </CardHeader>
 
-        {/* CONTENT WRAPPER FOR PDF EXPORT */}
         <CardContent ref={pdfRef} className="space-y-6">
           <div className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-primary border">
             {result.type.toUpperCase()}
           </div>
 
-          {/* REVIEWER DISPLAY */}
-          {result.type === 'reviewer' && (
+          {result.type === "reviewer" && (
             <pre className="whitespace-pre-wrap bg-muted rounded-lg p-4 leading-relaxed text-sm">
               {result.content}
             </pre>
           )}
 
-          {/* QUIZ DISPLAY */}
-          {result.type === 'quiz' && (
+          {result.type === "quiz" && (
             <div className="space-y-4">
               {result.content.map((q: any, i: number) => (
                 <div key={i} className="border rounded-lg p-4 bg-muted/40">
@@ -204,8 +201,7 @@ export default function ResultViewerPage() {
             </div>
           )}
 
-          {/* FLASHCARDS */}
-          {result.type === 'flashcards' && (
+          {result.type === "flashcards" && (
             <>
               <div className="grid gap-4 md:grid-cols-2">
                 {result.content.map((card: any, index: number) => (
@@ -235,6 +231,6 @@ export default function ResultViewerPage() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }

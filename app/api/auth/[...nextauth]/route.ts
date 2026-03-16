@@ -1,13 +1,14 @@
-import NextAuth from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcrypt';
+import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcrypt";
 
-import User from '@/models/User';
+import User from "@/models/User";
+import { connectDB } from "@/lib/db";
 
 const handler = NextAuth({
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
   },
   providers: [
     // GOOGLE LOGIN
@@ -18,20 +19,24 @@ const handler = NextAuth({
 
     // EMAIL + PASSWORD LOGIN
     CredentialsProvider({
-      name: 'Credentials',
+      name: "Credentials",
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
 
-        const user = await User.findOne({ email: credentials.email });
+        await connectDB();
+
+        const normalizedEmail = credentials.email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user || !user.password) return null;
 
         const isValid = await bcrypt.compare(
           credentials.password,
-          user.password
+          user.password,
         );
         if (!isValid) return null;
 
@@ -64,7 +69,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
 });
 

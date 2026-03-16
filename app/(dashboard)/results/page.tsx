@@ -1,20 +1,23 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileSearch, FileText } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FileSearch, FileText, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function ResultsPage() {
+  const router = useRouter();
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadResults = async () => {
       try {
-        const res = await fetch('/api/results/list', {
-          method: 'GET',
-          credentials: 'include',
+        const res = await fetch("/api/results/list", {
+          method: "GET",
+          credentials: "include",
         });
 
         if (!res.ok) {
@@ -25,7 +28,8 @@ export default function ResultsPage() {
         const data = await res.json();
         setResults(data.results || []);
       } catch (err) {
-        console.error('Failed to load results:', err);
+        console.error("Failed to load results:", err);
+        toast.error("Failed to load saved results.");
       } finally {
         setLoading(false);
       }
@@ -35,8 +39,8 @@ export default function ResultsPage() {
   }, []);
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] justify-center px-4 py-8">
-      <Card className="w-full max-w-5xl shadow-md">
+    <section className="space-y-6" aria-label="Generated results">
+      <Card className="w-full border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileSearch className="h-6 w-6 text-primary" />
@@ -47,7 +51,7 @@ export default function ResultsPage() {
         <CardContent>
           {/* LOADING STATE */}
           {loading && (
-            <div className="py-12 text-center text-muted-foreground">
+            <div className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
               Loading results...
             </div>
           )}
@@ -72,23 +76,33 @@ export default function ResultsPage() {
               {results.map((result) => (
                 <Card
                   key={result._id}
-                  className="border shadow-sm transition hover:shadow-md"
+                  className="border-border/60 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
                 >
                   <CardContent className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <FileText className="h-6 w-6 text-primary" />
 
                       <div>
-                        <p className="font-medium">{result.title}</p>
+                        <p className="font-medium">
+                          {result.title || "Untitled result"}
+                        </p>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          {result.type}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          Saved on{' '}
+                          Saved on{" "}
                           {new Date(result.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
 
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/results/${result._id}`)}
+                    >
                       View
+                      <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </CardContent>
                 </Card>
@@ -97,6 +111,6 @@ export default function ResultsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }

@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { signIn } from 'next-auth/react';
-import { Eye, EyeOff } from 'lucide-react';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+import { signIn } from "next-auth/react";
+import { Eye, EyeOff } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      toast.error('Please enter email and password');
+      toast.error("Please enter email and password");
       return;
     }
 
     setLoading(true);
 
-    const result = await signIn('credentials', {
+    const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
@@ -35,23 +35,28 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      toast.error('Invalid email or password');
+      toast.error("Invalid email or password");
     } else {
-      toast.success('Login successful');
-      router.push('/home');
+      toast.success("Login successful");
+      router.push("/home");
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            Login to StudyMate AI
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.97_0_0),transparent_50%)] dark:bg-[radial-gradient(circle_at_top,oklch(0.23_0_0),transparent_45%)]" />
+
+      <Card className="relative w-full max-w-md border-border/60 shadow-xl">
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Welcome back
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Sign in to continue your study sessions.
+          </p>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="space-y-4">
           <form
             className="space-y-4"
             onSubmit={(e) => {
@@ -60,49 +65,57 @@ export default function LoginPage() {
             }}
           >
             <Input
+              aria-label="Email address"
               placeholder="Email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="h-11"
+              required
             />
 
-            {/* PASSWORD WITH TOGGLE */}
             <div className="relative">
               <Input
+                aria-label="Password"
                 placeholder="Password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pr-10"
+                className="h-11 pr-11"
+                required
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Login'}
+            <Button type="submit" className="h-11 w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Login"}
             </Button>
 
-            {/* GOOGLE LOGIN */}
             <Button
               type="button"
               variant="outline"
-              className="w-full"
-              onClick={() => signIn('google')}
+              className="h-11 w-full"
+              onClick={() => signIn("google")}
             >
               Sign in with Google
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <Link href="/register" className="underline">
+            <p className="pt-1 text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/register"
+                className="font-medium underline underline-offset-4"
+              >
                 Register
               </Link>
             </p>

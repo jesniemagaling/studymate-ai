@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Moon, Sun, LogOut, Menu, X } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { signOut } from 'next-auth/react';
-import clsx from 'clsx';
+import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Moon, Sun, LogOut, Menu, X, Sparkles } from "lucide-react";
+import { useTheme } from "next-themes";
+import { signOut } from "next-auth/react";
+import clsx from "clsx";
 
 const navLinks = [
-  { label: 'Home', href: '/home' },
-  { label: 'Upload', href: '/upload' },
-  { label: 'Library', href: '/library' },
-  { label: 'Generate', href: '/generate' },
-  { label: 'Results', href: '/results' },
+  { label: "Home", href: "/home" },
+  { label: "Upload", href: "/upload" },
+  { label: "Library", href: "/library" },
+  { label: "Generate", href: "/generate" },
+  { label: "Results", href: "/results" },
 ];
 
 export default function Navbar() {
@@ -24,89 +24,101 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
-    router.push('/login');
+    router.push("/login");
   };
 
   const handleNavigate = (href: string) => {
     router.push(href);
-    setOpen(false); // close menu on mobile
+    setOpen(false);
   };
 
   return (
-    <nav className="relative border-b px-6 py-4">
-      <div className="flex items-center justify-between">
-        {/* Logo */}
-        <h1
-          className="cursor-pointer font-bold text-lg"
-          onClick={() => router.push('/home')}
+    <nav
+      className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur"
+      aria-label="Main navigation"
+    >
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+        <button
+          type="button"
+          onClick={() => router.push("/home")}
+          className="group inline-flex items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Go to home"
         >
-          StudyMate AI
-        </h1>
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary/20">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <span className="text-base font-semibold tracking-tight">
+            StudyMate AI
+          </span>
+        </button>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden items-center gap-1 md:flex" role="menubar">
           {navLinks.map((link) => (
             <Button
               key={link.href}
-              variant={pathname === link.href ? 'default' : 'ghost'}
+              variant={pathname === link.href ? "default" : "ghost"}
               size="sm"
               onClick={() => router.push(link.href)}
+              className="rounded-full px-4"
+              aria-current={pathname === link.href ? "page" : undefined}
             >
               {link.label}
             </Button>
           ))}
         </div>
 
-        {/* Right Controls */}
         <div className="flex items-center gap-2">
-          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
           >
             <Sun className="h-5 w-5 dark:hidden" />
             <Moon className="h-5 w-5 hidden dark:block" />
           </Button>
 
-          {/* Logout (desktop only) */}
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
             className="hidden md:inline-flex"
+            aria-label="Logout"
           >
             <LogOut className="h-5 w-5" />
           </Button>
 
-          {/* Hamburger */}
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden"
             onClick={() => setOpen(!open)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
           >
             {open ? <X /> : <Menu />}
           </Button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <div
+        id="mobile-nav"
         className={clsx(
-          'md:hidden absolute left-0 right-0 top-full z-50 origin-top transform transition-all duration-200',
+          "absolute left-0 right-0 top-full z-50 origin-top transform border-b bg-background/95 shadow-lg backdrop-blur transition-all duration-200 md:hidden",
           open
-            ? 'scale-y-100 opacity-100'
-            : 'pointer-events-none scale-y-95 opacity-0'
+            ? "scale-y-100 opacity-100"
+            : "pointer-events-none scale-y-95 opacity-0",
         )}
       >
-        <div className="flex flex-col gap-2 border-t bg-background p-4 shadow-md">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
           {navLinks.map((link) => (
             <Button
               key={link.href}
-              variant={pathname === link.href ? 'default' : 'ghost'}
+              variant={pathname === link.href ? "default" : "ghost"}
               className="justify-start"
               onClick={() => handleNavigate(link.href)}
+              aria-current={pathname === link.href ? "page" : undefined}
             >
               {link.label}
             </Button>
@@ -114,7 +126,7 @@ export default function Navbar() {
 
           <Button
             variant="ghost"
-            className="justify-start text-red-500"
+            className="justify-start text-destructive"
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />
