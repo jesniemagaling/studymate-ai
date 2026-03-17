@@ -7,18 +7,13 @@ import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { ArrowLeft, RotateCcw } from "lucide-react";
-
-type Flashcard = {
-  front: string;
-  back: string;
-  keyword: string;
-};
+import type { FlashcardContent, StudyResult } from "@/types/result";
 
 export default function FlashcardStudy() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [cards, setCards] = useState<Flashcard[]>([]);
+  const [cards, setCards] = useState<FlashcardContent["cards"]>([]);
   const [flipIndex, setFlipIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +34,14 @@ export default function FlashcardStudy() {
           return;
         }
 
-        setCards(data.result?.content || []);
+        const result = data.result as StudyResult | undefined;
+
+        if (!result || result.type !== "flashcards") {
+          toast.error("This result is not flashcards.");
+          return;
+        }
+
+        setCards(result.content.cards);
       } catch {
         toast.error("Failed to load flashcards.");
       } finally {

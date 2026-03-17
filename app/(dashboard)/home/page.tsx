@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +14,57 @@ import {
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+type AnalyticsSummary = {
+  pdfsUploaded: number;
+  reviewersGenerated: number;
+  quizzesGenerated: number;
+  flashcardsGenerated: number;
+  totalStudyMaterials: number;
+  lastGenerated: {
+    title: string;
+    type: "reviewer" | "quiz" | "flashcards";
+    createdAt: string;
+  } | null;
+};
+
 export default function HomePage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const [analytics, setAnalytics] = useState<AnalyticsSummary>({
+    pdfsUploaded: 0,
+    reviewersGenerated: 0,
+    quizzesGenerated: 0,
+    flashcardsGenerated: 0,
+    totalStudyMaterials: 0,
+    lastGenerated: null,
+  });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const firstName = session?.user?.firstName || "Student";
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const res = await fetch("/api/analytics/track", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          return;
+        }
+
+        const data = await res.json();
+        setAnalytics(data as AnalyticsSummary);
+      } catch (error) {
+        console.error("Failed to load analytics:", error);
+      } finally {
+        setLoadingAnalytics(false);
+      }
+    };
+
+    loadAnalytics();
+  }, []);
 
   return (
     <section className="space-y-6 sm:space-y-8" aria-label="Dashboard home">
@@ -56,13 +103,15 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
         <Card className="border-border/60 transition-colors hover:border-primary/30">
           <CardContent className="flex items-center gap-4 p-5">
             <FileText className="h-10 w-10 text-primary" />
             <div>
               <p className="text-sm text-muted-foreground">PDFs Uploaded</p>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-2xl font-bold">
+                {loadingAnalytics ? "-" : analytics.pdfsUploaded}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -71,8 +120,12 @@ export default function HomePage() {
           <CardContent className="flex items-center gap-4 p-5">
             <Brain className="h-10 w-10 text-primary" />
             <div>
-              <p className="text-sm text-muted-foreground">AI Generations</p>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-sm text-muted-foreground">
+                Reviewers Generated
+              </p>
+              <p className="text-2xl font-bold">
+                {loadingAnalytics ? "-" : analytics.reviewersGenerated}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -81,8 +134,24 @@ export default function HomePage() {
           <CardContent className="flex items-center gap-4 p-5">
             <Bookmark className="h-10 w-10 text-primary" />
             <div>
-              <p className="text-sm text-muted-foreground">Saved Results</p>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-sm text-muted-foreground">Quizzes Generated</p>
+              <p className="text-2xl font-bold">
+                {loadingAnalytics ? "-" : analytics.quizzesGenerated}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60 transition-colors hover:border-primary/30">
+          <CardContent className="flex items-center gap-4 p-5">
+            <Sparkles className="h-10 w-10 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Flashcards Generated
+              </p>
+              <p className="text-2xl font-bold">
+                {loadingAnalytics ? "-" : analytics.flashcardsGenerated}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -124,6 +193,52 @@ export default function HomePage() {
 
       <Card className="border-border/60">
         <CardHeader>
+          <CardTitle className="text-lg">Per-Content-Type Usage</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {[
+            {
+              label: "Reviewers",
+              value: analytics.reviewersGenerated,
+            },
+            {
+              label: "Quizzes",
+              value: analytics.quizzesGenerated,
+            },
+            {
+              label: "Flashcards",
+              value: analytics.flashcardsGenerated,
+            },
+          ].map((item) => {
+            const total =
+              analytics.reviewersGenerated +
+              analytics.quizzesGenerated +
+              analytics.flashcardsGenerated;
+            const percent =
+              total === 0 ? 0 : Math.round((item.value / total) * 100);
+
+            return (
+              <div key={item.label} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-muted-foreground">
+                    {loadingAnalytics ? "-" : `${item.value} (${percent}%)`}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-500"
+                    style={{ width: `${loadingAnalytics ? 0 : percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Clock className="h-5 w-5 text-primary" />
             Recent Activity
@@ -131,13 +246,31 @@ export default function HomePage() {
         </CardHeader>
 
         <CardContent>
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-10 text-center">
-            <Clock className="mb-3 h-10 w-10 text-muted-foreground" />
-            <p className="text-sm font-medium">No recent activity yet</p>
-            <p className="text-xs text-muted-foreground">
-              Your uploads and AI generations will appear here.
-            </p>
-          </div>
+          {!loadingAnalytics && analytics.lastGenerated ? (
+            <div className="rounded-lg border border-dashed p-6">
+              <p className="text-sm font-medium">Last Generated</p>
+              <p className="mt-1 text-base font-semibold">
+                {analytics.lastGenerated.title || "Untitled Result"}
+              </p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                {analytics.lastGenerated.type}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {new Date(analytics.lastGenerated.createdAt).toLocaleString()}
+              </p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Total Study Materials: {analytics.totalStudyMaterials}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-10 text-center">
+              <Clock className="mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="text-sm font-medium">No recent activity yet</p>
+              <p className="text-xs text-muted-foreground">
+                Your uploads and AI generations will appear here.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </section>

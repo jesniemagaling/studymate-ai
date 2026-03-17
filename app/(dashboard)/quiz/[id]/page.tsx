@@ -6,18 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ArrowLeft, CircleCheck } from "lucide-react";
-
-type QuizQuestion = {
-  question: string;
-  options: string[];
-  answer: string;
-};
+import type { QuizContent, StudyResult } from "@/types/result";
 
 export default function QuizPlayer() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [quiz, setQuiz] = useState<QuizQuestion[]>([]);
+  const [quiz, setQuiz] = useState<QuizContent["questions"]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -41,7 +36,14 @@ export default function QuizPlayer() {
           return;
         }
 
-        setQuiz(data.result?.content || []);
+        const result = data.result as StudyResult | undefined;
+
+        if (!result || result.type !== "quiz") {
+          toast.error("This result is not a quiz.");
+          return;
+        }
+
+        setQuiz(result.content.questions);
       } catch {
         toast.error("Failed to load quiz result.");
       } finally {

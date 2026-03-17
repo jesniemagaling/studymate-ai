@@ -23,6 +23,5 @@ export const config = {
     "/library/:path*",
     "/generate/:path*",
     "/results/:path*",
-    "/analytics/:path*",
   ],
 };

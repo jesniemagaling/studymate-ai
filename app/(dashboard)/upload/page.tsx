@@ -7,19 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadCloud, FileText, Loader2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
+import type { FlashcardContent, QuizContent } from "@/types/result";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
 
   const [text, setText] = useState("");
   const [reviewer, setReviewer] = useState("");
-  const [quiz, setQuiz] = useState<any[]>([]);
+  const [quiz, setQuiz] = useState<QuizContent["questions"]>([]);
 
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [loadingReviewer, setLoadingReviewer] = useState(false);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
 
-  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [flashcards, setFlashcards] = useState<FlashcardContent["cards"]>([]);
   const [loadingFlashcards, setLoadingFlashcards] = useState(false);
 
   // PDF UPLOAD & TEXT EXTRACTION
@@ -166,14 +167,23 @@ export default function UploadPage() {
   // SAVE REVIEWER TO DATABASE
   const saveReviewer = async () => {
     try {
-      const res = await fetch("/api/results/save", {
+      const reviewerPayload = {
+        type: "reviewer" as const,
+        content: {
+          summary: reviewer,
+          keyPoints: reviewer
+            .split("\n")
+            .map((line) => line.trim().replace(/^[-*]\s*/, ""))
+            .filter(Boolean)
+            .slice(0, 5),
+        },
+      };
+
+      const res = await fetch("/api/results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          type: "reviewer",
-          content: reviewer,
-        }),
+        body: JSON.stringify(reviewerPayload),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -191,14 +201,18 @@ export default function UploadPage() {
   // SAVE QUIZ TO DATABASE
   const saveQuiz = async () => {
     try {
-      const res = await fetch("/api/results/save", {
+      const quizPayload = {
+        type: "quiz" as const,
+        content: {
+          questions: quiz,
+        },
+      };
+
+      const res = await fetch("/api/results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          type: "quiz",
-          content: quiz,
-        }),
+        body: JSON.stringify(quizPayload),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -216,14 +230,18 @@ export default function UploadPage() {
   // SAVE FLASHCARDS TO DATABASE
   const saveFlashcards = async () => {
     try {
-      const res = await fetch("/api/results/save", {
+      const flashcardsPayload = {
+        type: "flashcards" as const,
+        content: {
+          cards: flashcards,
+        },
+      };
+
+      const res = await fetch("/api/results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          type: "flashcards",
-          content: flashcards,
-        }),
+        body: JSON.stringify(flashcardsPayload),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -325,7 +343,7 @@ export default function UploadPage() {
                   AI Reviewer Output
                 </h3>
                 <Button size="sm" onClick={saveReviewer}>
-                  Save Reviewer
+                  Save Result
                 </Button>
               </div>
 
@@ -367,12 +385,15 @@ export default function UploadPage() {
                   Generated Quiz
                 </h3>
                 <Button size="sm" onClick={saveQuiz}>
-                  Save Quiz
+                  Save Result
                 </Button>
               </div>
 
-              {quiz.map((q) => (
-                <div key={q.id} className="border rounded-lg p-4 bg-muted/40">
+              {quiz.map((q, index) => (
+                <div
+                  key={`${q.question}-${index}`}
+                  className="border rounded-lg p-4 bg-muted/40"
+                >
                   <p className="font-medium">{q.question}</p>
                   <ul className="mt-2 text-sm text-muted-foreground">
                     {q.options.map((opt: string, i: number) => (
@@ -412,7 +433,7 @@ export default function UploadPage() {
                 </h3>
 
                 <Button size="sm" onClick={saveFlashcards}>
-                  Save Flashcards
+                  Save Result
                 </Button>
               </div>
 

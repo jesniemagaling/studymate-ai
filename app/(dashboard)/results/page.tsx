@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { FileSearch, FileText, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import type { StudyResult } from "@/types/result";
 
 export default function ResultsPage() {
   const router = useRouter();
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<StudyResult[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function ResultsPage() {
         }
 
         const data = await res.json();
-        setResults(data.results || []);
+        setResults((data.results as StudyResult[]) || []);
       } catch (err) {
         console.error("Failed to load results:", err);
         toast.error("Failed to load saved results.");
@@ -75,7 +76,7 @@ export default function ResultsPage() {
             <div className="space-y-4">
               {results.map((result) => (
                 <Card
-                  key={result._id}
+                  key={result.id}
                   className="border-border/60 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
                 >
                   <CardContent className="flex items-center justify-between p-4">
@@ -99,7 +100,7 @@ export default function ResultsPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => router.push(`/results/${result._id}`)}
+                      onClick={() => router.push(`/results/${result.id}`)}
                     >
                       View
                       <ArrowRight className="ml-1 h-4 w-4" />

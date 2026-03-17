@@ -4,25 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  Copy,
-  Trash2,
-  FileText,
-  BookOpen,
-  ListChecks,
-  Download,
-} from "lucide-react";
+import { ArrowLeft, Copy, Trash2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import type { StudyResult } from "@/types/result";
+import { ResultRenderer } from "@/components/results/ResultRenderer";
 
 export default function ResultViewerPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
 
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<StudyResult | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Reference for PDF content
@@ -44,7 +38,7 @@ export default function ResultViewerPage() {
         }
 
         setResult(data.result);
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch result");
       } finally {
         setLoading(false);
@@ -164,67 +158,11 @@ export default function ResultViewerPage() {
             {result.type.toUpperCase()}
           </div>
 
-          {result.type === "reviewer" && (
-            <pre className="whitespace-pre-wrap bg-muted rounded-lg p-4 leading-relaxed text-sm">
-              {result.content}
-            </pre>
-          )}
-
-          {result.type === "quiz" && (
-            <div className="space-y-4">
-              {result.content.map((q: any, i: number) => (
-                <div key={i} className="border rounded-lg p-4 bg-muted/40">
-                  <p className="font-semibold mb-2">
-                    {i + 1}. {q.question}
-                  </p>
-
-                  <div className="ml-4 space-y-1">
-                    {q.options?.map((opt: string, index: number) => (
-                      <p key={index} className="text-sm text-muted-foreground">
-                        • {opt}
-                      </p>
-                    ))}
-                  </div>
-
-                  <p className="mt-2 text-xs text-primary">
-                    Answer: {q.answer}
-                  </p>
-                </div>
-              ))}
-
-              <Button
-                className="mt-2 w-full flex gap-2"
-                onClick={() => router.push(`/quiz/${id}`)}
-              >
-                <ListChecks className="h-4 w-4" /> Start Quiz Practice
-              </Button>
-            </div>
-          )}
-
-          {result.type === "flashcards" && (
-            <>
-              <div className="grid gap-4 md:grid-cols-2">
-                {result.content.map((card: any, index: number) => (
-                  <div
-                    key={index}
-                    className="border p-4 bg-muted/40 rounded-lg"
-                  >
-                    <p className="font-semibold">{card.front}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {card.back}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <Button
-                className="mt-2 w-full flex gap-2"
-                onClick={() => router.push(`/study/${id}`)}
-              >
-                <BookOpen className="h-4 w-4" /> Study Flashcards
-              </Button>
-            </>
-          )}
+          <ResultRenderer
+            result={result}
+            onPracticeQuiz={() => router.push(`/quiz/${id}`)}
+            onStudyFlashcards={() => router.push(`/study/${id}`)}
+          />
 
           <p className="mt-6 text-xs text-muted-foreground">
             Saved on: {new Date(result.createdAt).toLocaleString()}

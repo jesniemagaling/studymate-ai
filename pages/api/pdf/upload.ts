@@ -3,6 +3,8 @@ import { getToken } from "next-auth/jwt";
 import formidable from "formidable";
 import fs from "fs";
 import { extractTextFromPDF } from "@/lib/pdf";
+import { connectDB } from "@/lib/db";
+import Pdf from "@/models/Pdf";
 
 export const config = {
   api: {
@@ -25,6 +27,12 @@ export default async function handler(
     });
 
     if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = (token.id as string | undefined) || token.sub;
+
+    if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -52,6 +60,15 @@ export default async function handler(
 
     const buffer = fs.readFileSync(file.filepath);
     const text = await extractTextFromPDF(buffer);
+
+    await connectDB();
+    await Pdf.create({
+      userId,
+      fileName: file.originalFilename || "uploaded.pdf",
+      mimeType: file.mimetype,
+      size: file.size,
+      extractedText: text,
+    });
 
     console.log("PDF TEXT LENGTH:", text.length);
 
