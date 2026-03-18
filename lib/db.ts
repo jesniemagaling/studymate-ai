@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseCache: MongooseCache | undefined;
+}
+
 const MONGODB_URI = process.env.MONGODB_URI!;
 const MONGODB_URI_DIRECT = process.env.MONGODB_URI_DIRECT;
 
@@ -7,11 +17,9 @@ if (!MONGODB_URI) {
   throw new Error("Please define MONGODB_URI in .env.local");
 }
 
-let cached = (global as any).mongoose;
-
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
-}
+const cached: MongooseCache =
+  globalThis.mongooseCache ??
+  (globalThis.mongooseCache = { conn: null, promise: null });
 
 function isMongoDnsLookupError(error: unknown) {
   const e = error as { code?: string; syscall?: string };

@@ -36,6 +36,12 @@ export async function GET(req: NextRequest) {
     lastGeneratedPromise,
   ]);
 
+  const recent = lastGenerated as {
+    title?: string;
+    type?: "reviewer" | "quiz" | "flashcards";
+    createdAt?: string | Date;
+  } | null;
+
   const reviewerCount =
     breakdown.find((item) => item._id === "reviewer")?.count || 0;
   const quizCount = breakdown.find((item) => item._id === "quiz")?.count || 0;
@@ -48,11 +54,11 @@ export async function GET(req: NextRequest) {
     quizzesGenerated: quizCount,
     flashcardsGenerated: flashcardsCount,
     totalStudyMaterials: reviewerCount + quizCount + flashcardsCount,
-    lastGenerated: lastGenerated
+    lastGenerated: recent
       ? {
-          title: lastGenerated.title,
-          type: lastGenerated.type,
-          createdAt: lastGenerated.createdAt,
+          title: recent.title,
+          type: recent.type,
+          createdAt: recent.createdAt,
         }
       : null,
   });

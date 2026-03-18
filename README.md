@@ -11,9 +11,9 @@ The project focuses on transforming PDF study materials into useful learning too
 This project was built to deepen knowledge in modern full-stack development using Next.js and AI integration.
 With StudyMate AI, users can:
 
-1. Upload PDF study materials 
+1. Upload PDF study materials
 2. Extract text from uploaded PDFs
-3. Generate AI-powered reviewers, quizzes, and flashcards 
+3. Generate AI-powered reviewers, quizzes, and flashcards
 4. Save and reuse uploaded PDFs
 5. View generated study results
 6. Track basic usage analytics
@@ -38,7 +38,7 @@ It is a hands-on, intermediate-level project that demonstrates real-world applic
 
 ## Tech Stack
 
-- **Next.js** – Full-stack React framework (App Router) 
+- **Next.js** – Full-stack React framework (App Router)
 - **TypeScript** – Type-safe development
 - **Tailwind CSS** – Utility-first styling for responsive design
 - **MongoDB + Mongoose** – Database and data modeling
@@ -53,8 +53,8 @@ It is a hands-on, intermediate-level project that demonstrates real-world applic
 
 ### Prerequisites
 
-- Node.js v18 or later 
-- npm or yarn  
+- Node.js v18 or later
+- npm or yarn
 - MongoDB Atlas account
 - OpenAI API key
 - Code editor (VS Code recommended)
@@ -63,7 +63,7 @@ It is a hands-on, intermediate-level project that demonstrates real-world applic
 
 ### Installation
 
-```bash
+````bash
 # Clone this repository
 git clone https://github.com/jesniemagaling/studymate-ai.git
 
@@ -75,3 +75,28 @@ npm install
 
 # Start the development server
 npm run dev
+
+## Testing
+
+This project uses a modern test stack:
+
+- `Vitest` for unit and integration tests
+- `Playwright` for end-to-end smoke tests
+
+Run tests locally:
+
+```bash
+# Unit + integration
+npm run test
+
+# Coverage report
+npm run test:coverage
+
+# E2E tests
+npm run test:e2e
+````
+
+CI workflows:
+
+- `.github/workflows/ci.yml` runs lint, tests, and build on push/PR
+- `.github/workflows/e2e.yml` runs Playwright tests manually via workflow dispatch

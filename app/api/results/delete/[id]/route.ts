@@ -1,31 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { connectDB } from "@/lib/db";
-import Result from "@/models/Result";
+import { NextRequest } from "next/server";
+import { apiError, apiSuccess } from "@/lib/api/response";
+import { getUserIdFromRequest } from "@/lib/auth/user-id";
+import {
+  deleteResultForUser,
+  ResultNotFoundError,
+} from "@/lib/services/results";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  const { id } = await params;
+  const userId = await getUserIdFromRequest(req);
 
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) {
+    return apiError({
+      message: "Unauthorized",
+      status: 401,
+      errorCode: "UNAUTHORIZED",
+    });
   }
 
-  await connectDB();
+  try {
+    await deleteResultForUser(userId, id);
 
-  const deleted = await Result.findOneAndDelete({
-    _id: params.id,
-    userId: token.id,
-  });
+    return apiSuccess({}, "Deleted successfully");
+  } catch (error) {
+    if (error instanceof ResultNotFoundError) {
+      return apiError({
+        message: "Result not found",
+        status: 404,
+        errorCode: "RESULT_NOT_FOUND",
+      });
+    }
 
-  if (!deleted) {
-    return NextResponse.json({ error: "Result not found" }, { status: 404 });
+    return apiError({
+      message: "Failed to delete result",
+      status: 500,
+      errorCode: "RESULT_DELETE_FAILED",
+    });
   }
-
-  return NextResponse.json({ message: "Deleted successfully" });
 }

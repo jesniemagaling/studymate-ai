@@ -84,14 +84,16 @@ export async function POST(req: NextRequest) {
     const reviewer = completion.choices[0].message.content;
 
     return NextResponse.json({ reviewer });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("AI generation error:", error);
 
-    if (error?.code === "insufficient_quota") {
+    const err = error as { code?: string; status?: number };
+
+    if (err?.code === "insufficient_quota") {
       return NextResponse.json({ reviewer: buildMockReviewer(requestText) });
     }
 
-    if (error?.status === 429) {
+    if (err?.status === 429) {
       return NextResponse.json(
         {
           error:
@@ -101,7 +103,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (error?.status === 401) {
+    if (err?.status === 401) {
       return NextResponse.json({ reviewer: buildMockReviewer(requestText) });
     }
 

@@ -1,50 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { z } from "zod";
+import { NextRequest } from "next/server";
 
-import { connectDB } from "@/lib/db";
-import Result from "@/models/Result";
-import { SaveResultSchema } from "@/lib/validation/result";
+import { apiError, apiSuccess } from "@/lib/api/response";
+import { getUserIdFromRequest } from "@/lib/auth/user-id";
+import {
+  ResultValidationError,
+  saveResultForUser,
+} from "@/lib/services/results";
 
 export async function saveResultHandler(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const userId = await getUserIdFromRequest(req);
 
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) {
+    return apiError({
+      message: "Unauthorized",
+      status: 401,
+      errorCode: "UNAUTHORIZED",
+    });
   }
 
   try {
     const rawBody = await req.json();
-    const parsed = SaveResultSchema.parse(rawBody);
 
-    await connectDB();
+    const created = await saveResultForUser(userId, rawBody);
 
-    const created = await Result.create({
-      userId: token.id,
-      title: parsed.title?.trim() || "Untitled Result",
-      type: parsed.type,
-      content: parsed.content,
-    });
-
-    return NextResponse.json({
-      message: "Saved",
-      result: created,
-    });
+    return apiSuccess({ result: created }, "Saved");
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "Invalid result payload",
-          details: error.issues,
-        },
-        { status: 400 },
-      );
+    if (error instanceof ResultValidationError) {
+      return apiError({
+        message: error.message,
+        status: 400,
+        errorCode: "INVALID_RESULT_PAYLOAD",
+        details: error.details,
+      });
     }
 
     console.error("Save result error:", error);
-    return NextResponse.json(
-      { error: "Failed to save result" },
-      { status: 500 },
-    );
+    return apiError({
+      message: "Failed to save result",
+      status: 500,
+      errorCode: "SAVE_RESULT_FAILED",
+    });
   }
 }

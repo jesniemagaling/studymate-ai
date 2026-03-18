@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 type Flashcard = {
   front: string;
@@ -7,32 +7,32 @@ type Flashcard = {
   keyword: string;
 };
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const token = await getToken({
-    req: req as any,
+    req,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
   if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { text }: { text: string } = await req.json();
 
-  if (!text || typeof text !== 'string') {
-    return NextResponse.json({ error: 'No text provided' }, { status: 400 });
+  if (!text || typeof text !== "string") {
+    return NextResponse.json({ error: "No text provided" }, { status: 400 });
   }
 
   // ---------- BASIC FLASHCARD LOGIC ----------
   const sentences: string[] = text
-    .split('.')
+    .split(".")
     .map((s: string) => s.trim())
     .filter((s: string) => s.length > 20);
 
   const flashcards: Flashcard[] = [];
 
   sentences.forEach((sentence: string, index: number) => {
-    const words: string[] = sentence.split(' ');
+    const words: string[] = sentence.split(" ");
 
     const keyword: string =
       words.find((w: string) => w.length > 6 && /^[A-Za-z]+$/.test(w)) ??

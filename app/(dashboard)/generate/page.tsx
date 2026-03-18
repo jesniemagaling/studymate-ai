@@ -30,9 +30,12 @@ export default function GeneratePage() {
   const router = useRouter();
 
   return (
-    <section className="space-y-6" aria-label="Generate study materials">
-      <Card className="w-full border-border/60 shadow-sm">
-        <CardHeader className="space-y-2">
+    <section
+      className="mx-auto w-full max-w-5xl space-y-4"
+      aria-label="Generate study materials"
+    >
+      <Card className="w-full border-border/60 py-4 shadow-sm">
+        <CardHeader className="space-y-2 pb-2">
           <CardTitle className="text-xl font-semibold">
             Generate Study Materials
           </CardTitle>

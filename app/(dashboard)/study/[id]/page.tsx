@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import { toast } from "sonner";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, BookOpen } from "lucide-react";
 import type { FlashcardContent, StudyResult } from "@/types/result";
 
 export default function FlashcardStudy() {
@@ -54,32 +54,55 @@ export default function FlashcardStudy() {
 
   if (loading) {
     return (
-      <div className="py-16 text-center text-muted-foreground">
-        Loading flashcards...
-      </div>
+      <section
+        className="mx-auto w-full max-w-5xl space-y-4"
+        aria-label="Flashcard study loading"
+      >
+        <Card className="w-full border-border/60 py-4 shadow-sm">
+          <CardContent className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
+            Loading flashcards...
+          </CardContent>
+        </Card>
+      </section>
     );
   }
 
   if (!cards.length) {
     return (
-      <div className="space-y-4 py-16 text-center">
-        <p className="text-muted-foreground">
-          No flashcard data found for this result.
-        </p>
-        <Button variant="outline" onClick={() => router.push("/results")}>
-          Back to Results
-        </Button>
-      </div>
+      <section
+        className="mx-auto w-full max-w-5xl space-y-4"
+        aria-label="Flashcard study empty"
+      >
+        <Card className="w-full border-border/60 py-4 shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center rounded-lg border border-dashed p-10 text-center">
+            <BookOpen className="mb-3 h-10 w-10 text-muted-foreground" />
+            <p className="text-sm font-medium">No flashcard data found</p>
+            <p className="text-xs text-muted-foreground">
+              Save generated flashcards first, then launch study mode.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => router.push("/results")}
+            >
+              Back to Results
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
     );
   }
 
   return (
-    <section className="space-y-6" aria-label="Flashcard study mode">
-      <Card className="w-full max-w-4xl border-border/60 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
+    <section
+      className="mx-auto w-full max-w-5xl space-y-4"
+      aria-label="Flashcard study mode"
+    >
+      <Card className="w-full border-border/60 py-4 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Flashcard Study Mode</CardTitle>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => router.push("/results")}
           >
@@ -88,12 +111,18 @@ export default function FlashcardStudy() {
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="pb-0">
+          <p className="text-sm text-muted-foreground">
+            Flip cards to reveal answers and reinforce active recall.
+          </p>
+        </CardContent>
+
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Click a card to reveal the answer. Click again to flip it back.
           </p>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             {cards.map((card, index) => (
               <button
                 type="button"
@@ -104,7 +133,7 @@ export default function FlashcardStudy() {
               >
                 <div
                   className={clsx(
-                    "min-h-40 rounded-xl border p-6 shadow-sm transition-all",
+                    "min-h-32 rounded-xl border p-5 shadow-sm transition-all",
                     flipIndex === index
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background hover:border-primary/40 hover:bg-muted/40",
@@ -120,21 +149,24 @@ export default function FlashcardStudy() {
             ))}
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => setFlipIndex(null)}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset Flips
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setFlipIndex(null)}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Reset Flips
+            </Button>
 
-          <Button
-            className="w-full sm:w-auto"
-            onClick={() => router.push("/results")}
-          >
-            Back
-          </Button>
+            <Button
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={() => router.push("/results")}
+            >
+              Back to Results
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </section>

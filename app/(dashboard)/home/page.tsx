@@ -67,7 +67,10 @@ export default function HomePage() {
   }, []);
 
   return (
-    <section className="space-y-6 sm:space-y-8" aria-label="Dashboard home">
+    <section
+      className="mx-auto w-full max-w-6xl space-y-4 sm:space-y-6"
+      aria-label="Dashboard home"
+    >
       <Card className="overflow-hidden border-none bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
         <CardContent className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8">
           <div>

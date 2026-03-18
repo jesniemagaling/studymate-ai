@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,8 +44,10 @@ const modeConfig: Record<
   },
 };
 
-export default function UploadPage() {
+function UploadPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const loadedPdfIdRef = useRef<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
   const [text, setText] = useState("");
@@ -59,6 +61,11 @@ export default function UploadPage() {
   const [flashcards, setFlashcards] = useState<FlashcardContent["cards"]>([]);
   const [loadingFlashcards, setLoadingFlashcards] = useState(false);
   const [manualTextMode, setManualTextMode] = useState(false);
+  const [resultTitle, setResultTitle] = useState("");
+  const [quizItemCount, setQuizItemCount] = useState(5);
+  const [quizQuestionType, setQuizQuestionType] = useState<
+    "multiple_choice" | "fill_in_blank"
+  >("multiple_choice");
   const [quizDifficulty, setQuizDifficulty] = useState<
     "easy" | "medium" | "hard"
   >("medium");
@@ -68,11 +75,80 @@ export default function UploadPage() {
   const quizSectionRef = useRef<HTMLElement | null>(null);
   const flashcardsSectionRef = useRef<HTMLElement | null>(null);
 
+  const hasRichContent = Boolean(
+    text || reviewer || quiz.length > 0 || flashcards.length > 0,
+  );
+
+  const createDefaultTitle = (mode: GenerationMode) => {
+    const sourceName =
+      file?.name?.replace(/\.pdf$/i, "") ||
+      (searchParams?.get("pdfId") ? "Library PDF" : "Study Material");
+    const label =
+      mode === "reviewer"
+        ? "Reviewer"
+        : mode === "quiz"
+          ? "Quiz"
+          : "Flashcards";
+    return `${sourceName} - ${label}`;
+  };
+
   useEffect(() => {
     const mode = searchParams?.get("mode");
     if (mode === "reviewer" || mode === "quiz" || mode === "flashcards") {
       setSelectedMode(mode);
     }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const pdfId = searchParams?.get("pdfId");
+
+    if (!pdfId || loadedPdfIdRef.current === pdfId) {
+      return;
+    }
+
+    loadedPdfIdRef.current = pdfId;
+
+    const loadPdf = async () => {
+      try {
+        const res = await fetch(`/api/pdf/get/${pdfId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data?.pdf) {
+          toast.error(data.error || "Failed to load selected PDF.");
+          return;
+        }
+
+        const extractedText = String(data.pdf.extractedText || "");
+
+        if (data.pdf.extractionStatus === "failed") {
+          setManualTextMode(true);
+          setText(extractedText);
+          toast.warning(
+            data.pdf.extractionError ||
+              "This PDF had extraction issues. You can paste/edit text and continue.",
+          );
+          return;
+        }
+
+        setManualTextMode(false);
+        setText(extractedText);
+        setFile(null);
+
+        if (data.pdf.extractionStatus === "fallback") {
+          toast.warning("Loaded recovered text from malformed PDF.");
+        } else {
+          toast.success("Loaded text from your library PDF.");
+        }
+      } catch {
+        toast.error("Failed to load selected PDF.");
+      }
+    };
+
+    loadPdf();
   }, [searchParams]);
 
   useEffect(() => {
@@ -100,6 +176,7 @@ export default function UploadPage() {
     setQuiz([]);
     setText("");
     setFlashcards([]);
+    setResultTitle("");
     setManualTextMode(false);
 
     try {
@@ -180,6 +257,9 @@ export default function UploadPage() {
 
       setSelectedMode("reviewer");
       setReviewer(data.reviewer);
+      if (!resultTitle.trim()) {
+        setResultTitle(createDefaultTitle("reviewer"));
+      }
       toast.success("Reviewer generated successfully.");
     } catch {
       toast.error("Failed to generate reviewer. Please try again.");
@@ -201,7 +281,12 @@ export default function UploadPage() {
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, difficulty: quizDifficulty }),
+        body: JSON.stringify({
+          text,
+          difficulty: quizDifficulty,
+          count: quizItemCount,
+          questionType: quizQuestionType,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -213,6 +298,9 @@ export default function UploadPage() {
 
       setSelectedMode("quiz");
       setQuiz(data.questions);
+      if (!resultTitle.trim()) {
+        setResultTitle(createDefaultTitle("quiz"));
+      }
       toast.success("Quiz generated successfully.");
     } catch {
       toast.error("Failed to generate quiz. Please try again.");
@@ -246,6 +334,9 @@ export default function UploadPage() {
 
       setSelectedMode("flashcards");
       setFlashcards(data.flashcards);
+      if (!resultTitle.trim()) {
+        setResultTitle(createDefaultTitle("flashcards"));
+      }
       toast.success("Flashcards generated successfully.");
     } catch {
       toast.error("Failed to generate flashcards. Please try again.");
@@ -258,6 +349,7 @@ export default function UploadPage() {
   const saveReviewer = async () => {
     try {
       const reviewerPayload = {
+        title: resultTitle.trim() || createDefaultTitle("reviewer"),
         type: "reviewer" as const,
         content: {
           summary: reviewer,
@@ -289,9 +381,10 @@ export default function UploadPage() {
   };
 
   // SAVE QUIZ TO DATABASE
-  const saveQuiz = async () => {
+  const saveQuiz = async (startPractice = false) => {
     try {
       const quizPayload = {
+        title: resultTitle.trim() || createDefaultTitle("quiz"),
         type: "quiz" as const,
         content: {
           questions: quiz,
@@ -312,15 +405,29 @@ export default function UploadPage() {
       }
 
       toast.success("Quiz saved!");
+
+      if (startPractice) {
+        const resultId = String(data?.result?._id || data?.result?.id || "");
+
+        if (resultId) {
+          router.push(`/quiz/${resultId}`);
+          return;
+        }
+
+        toast.warning(
+          "Quiz saved, but quiz practice could not be opened automatically.",
+        );
+      }
     } catch {
       toast.error("Failed to save quiz. Please try again.");
     }
   };
 
   // SAVE FLASHCARDS TO DATABASE
-  const saveFlashcards = async () => {
+  const saveFlashcards = async (startStudy = false) => {
     try {
       const flashcardsPayload = {
+        title: resultTitle.trim() || createDefaultTitle("flashcards"),
         type: "flashcards" as const,
         content: {
           cards: flashcards,
@@ -341,22 +448,47 @@ export default function UploadPage() {
       }
 
       toast.success("Flashcards saved!");
+
+      if (startStudy) {
+        const resultId = String(data?.result?._id || data?.result?.id || "");
+
+        if (resultId) {
+          router.push(`/study/${resultId}`);
+          return;
+        }
+
+        toast.warning(
+          "Flashcards saved, but study mode could not be opened automatically.",
+        );
+      }
     } catch {
       toast.error("Failed to save flashcards. Please try again.");
     }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
-      <Card className="w-full max-w-3xl shadow-md">
-        <CardHeader>
+    <div className="mx-auto w-full max-w-5xl px-2 sm:px-0">
+      <Card
+        className={`flex w-full flex-col overflow-hidden py-4 shadow-md ${
+          hasRichContent ? "max-h-[calc(100vh-8.5rem)]" : ""
+        }`}
+      >
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-xl">
             <UploadCloud className="h-5 w-5 text-primary" />
             Upload & Generate Study Materials
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Upload a PDF, choose a material type, and save directly into study
+            mode.
+          </p>
         </CardHeader>
 
-        <CardContent className="space-y-8">
+        <CardContent
+          className={`${
+            hasRichContent ? "min-h-0 flex-1 overflow-y-auto pr-2" : ""
+          } space-y-6`}
+        >
           {/* UPLOAD BOX */}
           <label
             htmlFor="pdf-upload"
@@ -487,6 +619,13 @@ export default function UploadPage() {
                 </Button>
               </div>
 
+              <Input
+                value={resultTitle}
+                onChange={(e) => setResultTitle(e.target.value)}
+                placeholder="Enter a title for this result"
+                className="h-10"
+              />
+
               <Textarea
                 value={reviewer}
                 readOnly
@@ -503,11 +642,62 @@ export default function UploadPage() {
             >
               <div>
                 <p className="text-sm font-semibold text-muted-foreground">
-                  Quiz Difficulty
+                  Quiz Settings
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Pick a level before generating questions.
+                  Choose difficulty, type, and item count before generating.
                 </p>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Question Type
+                  </p>
+                  <div className="inline-flex rounded-lg border bg-background p-1">
+                    {(
+                      [
+                        ["multiple_choice", "Multiple Choice"],
+                        ["fill_in_blank", "Fill in the Blank"],
+                      ] as const
+                    ).map(([type, label]) => (
+                      <Button
+                        key={type}
+                        type="button"
+                        size="sm"
+                        variant={
+                          quizQuestionType === type ? "default" : "ghost"
+                        }
+                        onClick={() => setQuizQuestionType(type)}
+                        disabled={loadingQuiz}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label
+                    htmlFor="quiz-item-count"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    Number of Items
+                  </label>
+                  <Input
+                    id="quiz-item-count"
+                    type="number"
+                    min={1}
+                    max={15}
+                    value={quizItemCount}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setQuizItemCount(Number.isNaN(value) ? 5 : value);
+                    }}
+                    className="h-9"
+                    disabled={loadingQuiz}
+                  />
+                </div>
               </div>
 
               <div className="inline-flex rounded-lg border bg-background p-1">
@@ -543,7 +733,9 @@ export default function UploadPage() {
                     Generate{" "}
                     {quizDifficulty.charAt(0).toUpperCase() +
                       quizDifficulty.slice(1)}{" "}
-                    Quiz
+                    {quizQuestionType === "fill_in_blank"
+                      ? "Fill in the Blank Quiz"
+                      : "Quiz"}
                   </span>
                 )}
               </Button>
@@ -557,10 +749,26 @@ export default function UploadPage() {
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   Generated Quiz
                 </h3>
-                <Button size="sm" onClick={saveQuiz}>
-                  Save Result
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => saveQuiz(false)}
+                  >
+                    Save Result
+                  </Button>
+                  <Button size="sm" onClick={() => saveQuiz(true)}>
+                    Save & Start Quiz
+                  </Button>
+                </div>
               </div>
+
+              <Input
+                value={resultTitle}
+                onChange={(e) => setResultTitle(e.target.value)}
+                placeholder="Enter a title for this result"
+                className="h-10"
+              />
 
               {quiz.map((q, index) => (
                 <div
@@ -609,11 +817,26 @@ export default function UploadPage() {
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   Generated Flashcards
                 </h3>
-
-                <Button size="sm" onClick={saveFlashcards}>
-                  Save Result
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => saveFlashcards(false)}
+                  >
+                    Save Result
+                  </Button>
+                  <Button size="sm" onClick={() => saveFlashcards(true)}>
+                    Save & Start Study
+                  </Button>
+                </div>
               </div>
+
+              <Input
+                value={resultTitle}
+                onChange={(e) => setResultTitle(e.target.value)}
+                placeholder="Enter a title for this result"
+                className="h-10"
+              />
 
               <div className="grid md:grid-cols-2 gap-4">
                 {flashcards.map((card, index) => (
@@ -633,5 +856,19 @@ export default function UploadPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto w-full max-w-5xl px-2 py-8 text-center text-sm text-muted-foreground sm:px-0">
+          Loading upload workspace...
+        </div>
+      }
+    >
+      <UploadPageContent />
+    </Suspense>
   );
 }

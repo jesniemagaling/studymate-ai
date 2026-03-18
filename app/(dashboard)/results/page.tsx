@@ -7,6 +7,7 @@ import { FileSearch, FileText, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { StudyResult } from "@/types/result";
+import { apiFetch } from "@/lib/api/client";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -16,18 +17,15 @@ export default function ResultsPage() {
   useEffect(() => {
     const loadResults = async () => {
       try {
-        const res = await fetch("/api/results/list", {
-          method: "GET",
-          credentials: "include",
-        });
+        const data = await apiFetch<{ results: StudyResult[] }>(
+          "/api/results/list",
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
 
-        if (!res.ok) {
-          setLoading(false);
-          return;
-        }
-
-        const data = await res.json();
-        setResults((data.results as StudyResult[]) || []);
+        setResults(data.results || []);
       } catch (err) {
         console.error("Failed to load results:", err);
         toast.error("Failed to load saved results.");
@@ -40,13 +38,19 @@ export default function ResultsPage() {
   }, []);
 
   return (
-    <section className="space-y-6" aria-label="Generated results">
-      <Card className="w-full border-border/60 shadow-sm">
-        <CardHeader>
+    <section
+      className="mx-auto w-full max-w-5xl space-y-4"
+      aria-label="Generated results"
+    >
+      <Card className="w-full border-border/60 py-4 shadow-sm">
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileSearch className="h-6 w-6 text-primary" />
             Generated Results
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Review, practice, export, or manage your saved study outputs.
+          </p>
         </CardHeader>
 
         <CardContent>
@@ -73,13 +77,13 @@ export default function ResultsPage() {
 
           {/* RESULTS LIST */}
           {!loading && results.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {results.map((result) => (
                 <Card
                   key={result.id}
-                  className="border-border/60 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
+                  className="border-border/60 py-3 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
                 >
-                  <CardContent className="flex items-center justify-between p-4">
+                  <CardContent className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
                       <FileText className="h-6 w-6 text-primary" />
 

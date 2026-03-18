@@ -1,35 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { connectDB } from "@/lib/db";
-import Result from "@/models/Result";
+import { NextRequest } from "next/server";
 import { debug } from "@/lib/debug";
-import {
-  normalizeStoredResult,
-  type LegacyResult,
-} from "@/lib/results/normalize";
+import { apiError, apiSuccess } from "@/lib/api/response";
+import { getUserIdFromRequest } from "@/lib/auth/user-id";
+import { listResultsForUser } from "@/lib/services/results";
 
 export async function GET(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const userId = await getUserIdFromRequest(req);
 
-  if (!token) {
+  if (!userId) {
     debug("Unauthorized request to /results/list");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError({
+      message: "Unauthorized",
+      status: 401,
+      errorCode: "UNAUTHORIZED",
+    });
   }
 
-  debug("Fetching results for:", token.id);
+  debug("Fetching results for:", userId);
 
-  await connectDB();
-  debug("DB connected");
-
-  const rawResults = await Result.find({ userId: token.id })
-    .sort({ createdAt: -1 })
-    .lean();
-
-  const results = rawResults.map(
-    (raw) => normalizeStoredResult(raw as LegacyResult).result,
-  );
+  const results = await listResultsForUser(userId);
 
   debug("Returning results:", results.length);
 
-  return NextResponse.json({ results });
+  return apiSuccess({ results }, "Results fetched");
 }

@@ -1,39 +1,95 @@
 # StudyMate AI - System Documentation
 
 ## 1. System Overview
-StudyMate AI is a full-stack web application that converts uploaded PDF study materials into structured learning resources. The system uses automated text extraction and AI-based content generation to create reviewers, quizzes, and flashcards.
 
-## 2. System Workflow
-1. User logs into the platform.
-2. User uploads a PDF document.
-3. System extracts text from the document.
-4. User generates study tools such as reviewers, quizzes, or flashcards.
-5. Generated materials are saved in the database.
-6. User studies using the generated materials.
+StudyMate AI is a Next.js full-stack application that transforms uploaded PDF materials into reviewer summaries, quizzes, and flashcards. It supports save-and-practice workflows, analytics, and PDF export of generated results.
 
-## 3. System Architecture
-1. Frontend: Next.js, React, Tailwind CSS.
-2. Backend: Next.js API routes and Node.js.
-3. Database: MongoDB Atlas with Mongoose.
-4. Authentication: NextAuth.
-5. AI Processing: OpenAI API.
-6. PDF Processing: pdf-parse.
+## 2. Current End-to-End Workflow
 
-## 4. Database Structure
-1. Users Collection: Stores account information.
-2. PDF Collection: Stores uploaded documents and extracted text.
-3. Results Collection: Stores generated reviewers, quizzes, and flashcards.
+1. User signs in using credentials or Google.
+2. User uploads a PDF in Upload module.
+3. Backend extracts text using `pdf-parse`; malformed PDF fallback recovery is applied when needed.
+4. User selects output type and generates reviewer/quiz/flashcards.
+5. User saves output to Results collection.
+6. User can directly continue to Quiz Practice or Flashcard Study via save-and-start actions.
+7. User can review, edit title, delete, and export saved results.
 
-## 5. System Modules
+## 3. Architecture
+
+1. Frontend:
+   1. Next.js App Router + React.
+   2. Tailwind CSS + shadcn UI components.
+2. Backend:
+   1. Next.js route handlers under `app/api/**`.
+   2. Service-layer logic in `lib/services/**`.
+3. Database:
+   1. MongoDB Atlas.
+   2. Mongoose models (`User`, `Pdf`, `Result`).
+4. Authentication:
+   1. NextAuth JWT session strategy.
+   2. Route protection via `proxy.ts` matcher.
+5. AI/Generation:
+   1. Reviewer route integrates OpenAI.
+   2. Quiz and flashcards use deterministic generation logic.
+6. API Patterns:
+   1. Standardized envelopes via `lib/api/response.ts`.
+   2. Shared auth user-id resolution via `lib/auth/user-id.ts`.
+   3. Optional shared client wrapper via `lib/api/client.ts`.
+
+## 4. Modules
+
 1. Authentication Module
-2. PDF Upload and Processing Module
-3. AI Generation Module
-4. Results Management Module
-5. Analytics Dashboard Module
+   1. Register API.
+   2. NextAuth login providers.
+2. Upload & PDF Module
+   1. Upload endpoint with extraction fallback handling.
+   2. PDF library list/get endpoints.
+   3. View dialog preview and reuse action in UI.
+3. Generation Module
+   1. Reviewer generation endpoint (AI + fallback behaviors).
+   2. Quiz generation endpoint (difficulty/item count/type/context hint).
+   3. Flashcard generation endpoint.
+4. Results Module
+   1. Save/list/get/update/delete endpoints.
+   2. Practice mode integration.
+   3. Export-to-PDF with branded layout and pagination.
+5. Analytics Module
+   1. Per-user usage aggregation.
+   2. Recent activity summary.
 
-## 6. Expected Outputs
-1. AI-generated study reviewers.
-2. Automatically generated quizzes.
-3. Flashcard learning sets.
-4. Saved study resources.
-5. User learning analytics.
+## 5. Data Model Summary
+
+1. `User`
+   1. `firstName`, `lastName`, `email`, `password`, `image`, `role`, timestamps.
+2. `Pdf`
+   1. `userId`, `fileName`, `mimeType`, `size`, `extractedText`, `extractionStatus`, `extractionError`, timestamps.
+3. `Result`
+   1. `userId`, `title`, `type` (`reviewer|quiz|flashcards`), `content`, timestamps.
+
+## 6. API Surface (Current)
+
+1. Auth:
+   1. `POST /api/auth/register`
+   2. `GET|POST /api/auth/[...nextauth]`
+2. PDF:
+   1. `POST /api/pdf/upload`
+   2. `GET /api/pdf/list`
+   3. `GET /api/pdf/get/[id]`
+3. AI:
+   1. `POST /api/ai/generate`
+   2. `POST /api/ai/quiz`
+   3. `POST /api/ai/flashcards`
+4. Results:
+   1. `POST /api/results`
+   2. `GET /api/results/list`
+   3. `GET /api/results/get/[id]`
+   4. `PATCH /api/results/update/[id]`
+   5. `DELETE /api/results/delete/[id]`
+5. Analytics:
+   1. `GET /api/analytics/track`
+
+## 7. Notes on Reliability and Quality
+
+1. Result export avoids DOM screenshot parsing issues by using structured text-to-PDF generation.
+2. API routes are being standardized around service-layer and envelope patterns to improve maintainability.
+3. Protected route coverage includes quiz and study paths.

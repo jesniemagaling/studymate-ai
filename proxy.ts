@@ -23,5 +23,7 @@ export const config = {
     "/library/:path*",
     "/generate/:path*",
     "/results/:path*",
+    "/quiz/:path*",
+    "/study/:path*",
   ],
 };

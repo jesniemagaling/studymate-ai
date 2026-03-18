@@ -67,6 +67,8 @@ function normalizeQuizContent(raw: LegacyResult): {
     options: string[];
     answer: string;
     difficulty: "easy" | "medium" | "hard";
+    questionType?: "multiple_choice" | "fill_in_blank";
+    contextHint?: string;
   }[];
 } {
   if (QuizContentSchema.safeParse(raw.content).success) {
@@ -76,6 +78,8 @@ function normalizeQuizContent(raw: LegacyResult): {
         options: string[];
         answer: string;
         difficulty: "easy" | "medium" | "hard";
+        questionType?: "multiple_choice" | "fill_in_blank";
+        contextHint?: string;
       }[];
     };
   }
@@ -87,6 +91,8 @@ function normalizeQuizContent(raw: LegacyResult): {
         options?: string[];
         answer?: string;
         difficulty?: "easy" | "medium" | "hard";
+        questionType?: "multiple_choice" | "fill_in_blank";
+        contextHint?: string;
       };
 
       return {
@@ -94,6 +100,8 @@ function normalizeQuizContent(raw: LegacyResult): {
         options: Array.isArray(q.options) ? q.options : [],
         answer: q.answer || "",
         difficulty: q.difficulty || "medium",
+        questionType: q.questionType || "multiple_choice",
+        contextHint: q.contextHint,
       };
     });
   };

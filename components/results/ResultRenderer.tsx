@@ -58,6 +58,16 @@ function QuizView({
           <p className="mb-2 text-xs uppercase tracking-wide text-primary">
             {q.difficulty}
           </p>
+          {q.contextHint && (
+            <details className="mb-2 rounded-md border border-dashed bg-background/50 px-3 py-2">
+              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                Why this question?
+              </summary>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {q.contextHint}
+              </p>
+            </details>
+          )}
           <div className="ml-4 space-y-1">
             {q.options.map((opt) => (
               <p key={opt} className="text-sm text-muted-foreground">
@@ -65,7 +75,12 @@ function QuizView({
               </p>
             ))}
           </div>
-          <p className="mt-2 text-xs text-primary">Answer: {q.answer}</p>
+          <details className="mt-2 rounded-md border border-dashed bg-background/50 px-3 py-2">
+            <summary className="cursor-pointer text-xs font-medium text-primary">
+              Show answer
+            </summary>
+            <p className="mt-2 text-xs text-primary">Answer: {q.answer}</p>
+          </details>
         </div>
       ))}
 

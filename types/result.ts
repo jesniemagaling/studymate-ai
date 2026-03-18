@@ -10,6 +10,8 @@ export type QuizQuestion = {
   options: string[];
   answer: string;
   difficulty: "easy" | "medium" | "hard";
+  questionType?: "multiple_choice" | "fill_in_blank";
+  contextHint?: string;
 };
 
 export type QuizContent = {
