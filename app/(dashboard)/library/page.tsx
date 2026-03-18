@@ -1,12 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+type PdfLibraryItem = {
+  id: string;
+  fileName: string;
+  size: number;
+  extractedTextPreview: string;
+  createdAt: string;
+};
+
 export default function LibraryPage() {
   const router = useRouter();
+  const [pdfs, setPdfs] = useState<PdfLibraryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPdfs = async () => {
+      try {
+        const res = await fetch("/api/pdf/list", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setPdfs((data.pdfs as PdfLibraryItem[]) || []);
+      } catch {
+        setPdfs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPdfs();
+  }, []);
 
   return (
     <section className="space-y-6" aria-label="PDF library">
@@ -19,29 +55,65 @@ export default function LibraryPage() {
         </CardHeader>
 
         <CardContent>
-          <div className="relative overflow-hidden rounded-xl border border-dashed bg-muted/30 px-8 py-16 text-center">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.98_0_0),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,oklch(0.24_0_0),transparent_60%)]" />
-            <div className="relative flex flex-col items-center justify-center">
-              <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border bg-background shadow-sm">
-                <FileText className="h-8 w-8 text-muted-foreground" />
-              </div>
-
-              <h3 className="text-lg font-semibold">No PDFs uploaded yet</h3>
-
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Upload your documents to start generating reviewers, quizzes,
-                and flashcards.
-              </p>
-
-              <Button
-                className="mt-6 flex items-center gap-2"
-                onClick={() => router.push("/upload")}
-              >
-                <UploadCloud className="h-4 w-4" />
-                Upload PDF
-              </Button>
+          {loading ? (
+            <div className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
+              Loading library...
             </div>
-          </div>
+          ) : pdfs.length === 0 ? (
+            <div className="relative overflow-hidden rounded-xl border border-dashed bg-muted/30 px-8 py-16 text-center">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.98_0_0),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,oklch(0.24_0_0),transparent_60%)]" />
+              <div className="relative flex flex-col items-center justify-center">
+                <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border bg-background shadow-sm">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+
+                <h3 className="text-lg font-semibold">No PDFs uploaded yet</h3>
+
+                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                  Upload your documents to start generating reviewers, quizzes,
+                  and flashcards.
+                </p>
+
+                <Button
+                  className="mt-6 flex items-center gap-2"
+                  onClick={() => router.push("/upload")}
+                >
+                  <UploadCloud className="h-4 w-4" />
+                  Upload PDF
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {pdfs.map((pdf) => (
+                <Card
+                  key={pdf.id}
+                  className="border-border/60 transition-all hover:border-primary/40 hover:shadow-sm"
+                >
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start gap-3">
+                      <FileText className="mt-0.5 h-5 w-5 text-primary" />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{pdf.fileName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(pdf.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="line-clamp-3 text-sm text-muted-foreground">
+                      {pdf.extractedTextPreview ||
+                        "No extracted preview available."}
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      Uploaded: {new Date(pdf.createdAt).toLocaleString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </section>

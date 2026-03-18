@@ -55,6 +55,9 @@ function QuizView({
           <p className="mb-2 font-semibold">
             {i + 1}. {q.question}
           </p>
+          <p className="mb-2 text-xs uppercase tracking-wide text-primary">
+            {q.difficulty}
+          </p>
           <div className="ml-4 space-y-1">
             {q.options.map((opt) => (
               <p key={opt} className="text-sm text-muted-foreground">

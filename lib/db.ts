@@ -30,21 +30,27 @@ export async function connectDB() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(MONGODB_URI, {
-        bufferCommands: false,
-        serverSelectionTimeoutMS: 10000,
-      })
-      .catch(async (error) => {
-        if (isMongoDnsLookupError(error) && MONGODB_URI_DIRECT) {
-          return mongoose.connect(MONGODB_URI_DIRECT, {
+    cached.promise = (async () => {
+      try {
+        return await mongoose.connect(MONGODB_URI, {
+          bufferCommands: false,
+          serverSelectionTimeoutMS: 10000,
+        });
+      } catch (primaryError) {
+        if (!MONGODB_URI_DIRECT) {
+          throw primaryError;
+        }
+
+        try {
+          return await mongoose.connect(MONGODB_URI_DIRECT, {
             bufferCommands: false,
             serverSelectionTimeoutMS: 10000,
           });
+        } catch {
+          throw primaryError;
         }
-
-        throw error;
-      });
+      }
+    })();
   }
 
   try {

@@ -1,15 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadCloud, FileText, Loader2, ListChecks } from "lucide-react";
+import {
+  UploadCloud,
+  FileText,
+  Loader2,
+  ListChecks,
+  Brain,
+  Layers,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardContent, QuizContent } from "@/types/result";
 
+type GenerationMode = "reviewer" | "quiz" | "flashcards";
+
+const modeConfig: Record<
+  GenerationMode,
+  {
+    label: string;
+    description: string;
+    icon: typeof Brain;
+  }
+> = {
+  reviewer: {
+    label: "Reviewer",
+    description: "Create a concise study summary.",
+    icon: Brain,
+  },
+  quiz: {
+    label: "Quiz",
+    description: "Generate practice questions by difficulty.",
+    icon: ListChecks,
+  },
+  flashcards: {
+    label: "Flashcards",
+    description: "Build quick recall cards for review.",
+    icon: Layers,
+  },
+};
+
 export default function UploadPage() {
+  const searchParams = useSearchParams();
   const [file, setFile] = useState<File | null>(null);
 
   const [text, setText] = useState("");
@@ -22,6 +58,35 @@ export default function UploadPage() {
 
   const [flashcards, setFlashcards] = useState<FlashcardContent["cards"]>([]);
   const [loadingFlashcards, setLoadingFlashcards] = useState(false);
+  const [manualTextMode, setManualTextMode] = useState(false);
+  const [quizDifficulty, setQuizDifficulty] = useState<
+    "easy" | "medium" | "hard"
+  >("medium");
+  const [selectedMode, setSelectedMode] = useState<GenerationMode>("reviewer");
+
+  const reviewerSectionRef = useRef<HTMLElement | null>(null);
+  const quizSectionRef = useRef<HTMLElement | null>(null);
+  const flashcardsSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const mode = searchParams?.get("mode");
+    if (mode === "reviewer" || mode === "quiz" || mode === "flashcards") {
+      setSelectedMode(mode);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const target =
+      selectedMode === "reviewer"
+        ? reviewerSectionRef.current
+        : selectedMode === "quiz"
+          ? quizSectionRef.current
+          : flashcardsSectionRef.current;
+
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [selectedMode, text]);
 
   // PDF UPLOAD & TEXT EXTRACTION
   const handleUpload = async () => {
@@ -35,6 +100,7 @@ export default function UploadPage() {
     setQuiz([]);
     setText("");
     setFlashcards([]);
+    setManualTextMode(false);
 
     try {
       const formData = new FormData();
@@ -59,7 +125,28 @@ export default function UploadPage() {
         return;
       }
 
-      setText(data.text);
+      if (data.extractionMode === "fallback" && data.text) {
+        setManualTextMode(false);
+        setText(data.text);
+        toast.warning(
+          data.warning ||
+            "Auto-recovered text from a malformed PDF. Please review before generating.",
+        );
+        return;
+      }
+
+      if (data.needsManualText) {
+        setManualTextMode(true);
+        setText("");
+        toast.warning(
+          data.warning ||
+            "PDF uploaded but text extraction failed. Paste text manually to continue.",
+        );
+        return;
+      }
+
+      setManualTextMode(false);
+      setText(data.text || "");
       toast.success("PDF uploaded and text extracted.");
     } catch {
       toast.error("Upload failed. Please try again.");
@@ -91,6 +178,7 @@ export default function UploadPage() {
         return;
       }
 
+      setSelectedMode("reviewer");
       setReviewer(data.reviewer);
       toast.success("Reviewer generated successfully.");
     } catch {
@@ -113,7 +201,7 @@ export default function UploadPage() {
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, difficulty: quizDifficulty }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -123,6 +211,7 @@ export default function UploadPage() {
         return;
       }
 
+      setSelectedMode("quiz");
       setQuiz(data.questions);
       toast.success("Quiz generated successfully.");
     } catch {
@@ -155,6 +244,7 @@ export default function UploadPage() {
         return;
       }
 
+      setSelectedMode("flashcards");
       setFlashcards(data.flashcards);
       toast.success("Flashcards generated successfully.");
     } catch {
@@ -304,40 +394,90 @@ export default function UploadPage() {
           </Button>
 
           {/* TEXT PREVIEW */}
-          {text && (
+          {(text || manualTextMode) && (
             <section className="space-y-2">
               <h3 className="text-sm font-semibold text-muted-foreground">
-                Extracted Text
+                {manualTextMode ? "Paste Text Manually" : "Extracted Text"}
               </h3>
+              {manualTextMode && (
+                <p className="text-xs text-muted-foreground">
+                  This PDF could not be parsed automatically. Paste or type your
+                  study text below, then continue generating materials.
+                </p>
+              )}
               <Textarea
                 value={text}
-                readOnly
+                onChange={(e) => setText(e.target.value)}
+                readOnly={!manualTextMode}
                 className="h-64 resize-none bg-muted"
               />
             </section>
           )}
 
+          {text && (
+            <section className="space-y-3 rounded-xl border bg-muted/20 p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                Choose Material Type
+              </h3>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {(["reviewer", "quiz", "flashcards"] as const).map((mode) => {
+                  const config = modeConfig[mode];
+                  const Icon = config.icon;
+
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setSelectedMode(mode)}
+                      className={`rounded-lg border p-3 text-left transition-all ${
+                        selectedMode === mode
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/40 hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="mt-0.5 rounded-md bg-background p-1.5">
+                          <Icon className="h-4 w-4 text-primary" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold">
+                            {config.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {config.description}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* GENERATE REVIEWER */}
-          {text && !reviewer && (
-            <Button
-              onClick={generateReviewer}
-              disabled={loadingReviewer}
-              className="w-full"
-            >
-              {loadingReviewer ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating reviewer...
-                </span>
-              ) : (
-                "Generate Reviewer"
-              )}
-            </Button>
+          {text && selectedMode === "reviewer" && !reviewer && (
+            <section ref={reviewerSectionRef} className="space-y-2">
+              <Button
+                onClick={generateReviewer}
+                disabled={loadingReviewer}
+                className="w-full"
+              >
+                {loadingReviewer ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating reviewer...
+                  </span>
+                ) : (
+                  "Generate Reviewer"
+                )}
+              </Button>
+            </section>
           )}
 
           {/* REVIEWER OUTPUT */}
-          {reviewer && (
-            <section className="space-y-2">
+          {selectedMode === "reviewer" && reviewer && (
+            <section ref={reviewerSectionRef} className="space-y-2">
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   AI Reviewer Output
@@ -356,30 +496,63 @@ export default function UploadPage() {
           )}
 
           {/* GENERATE QUIZ */}
-          {text && (
-            <Button
-              onClick={generateQuiz}
-              disabled={loadingQuiz}
-              className="w-full"
-              variant="outline"
+          {text && selectedMode === "quiz" && (
+            <section
+              ref={quizSectionRef}
+              className="space-y-3 rounded-xl border bg-muted/20 p-4"
             >
-              {loadingQuiz ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating quiz...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <ListChecks className="h-4 w-4" />
-                  Generate Quiz
-                </span>
-              )}
-            </Button>
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground">
+                  Quiz Difficulty
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Pick a level before generating questions.
+                </p>
+              </div>
+
+              <div className="inline-flex rounded-lg border bg-background p-1">
+                {(["easy", "medium", "hard"] as const).map((level) => (
+                  <Button
+                    key={level}
+                    type="button"
+                    size="sm"
+                    variant={quizDifficulty === level ? "default" : "ghost"}
+                    onClick={() => setQuizDifficulty(level)}
+                    disabled={loadingQuiz}
+                    className="capitalize"
+                  >
+                    {level}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                onClick={generateQuiz}
+                disabled={loadingQuiz}
+                className="w-full"
+                variant="outline"
+              >
+                {loadingQuiz ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating {quizDifficulty} quiz...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <ListChecks className="h-4 w-4" />
+                    Generate{" "}
+                    {quizDifficulty.charAt(0).toUpperCase() +
+                      quizDifficulty.slice(1)}{" "}
+                    Quiz
+                  </span>
+                )}
+              </Button>
+            </section>
           )}
 
           {/* QUIZ OUTPUT */}
-          {quiz.length > 0 && (
-            <section className="space-y-4">
+          {selectedMode === "quiz" && quiz.length > 0 && (
+            <section ref={quizSectionRef} className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   Generated Quiz
@@ -395,6 +568,9 @@ export default function UploadPage() {
                   className="border rounded-lg p-4 bg-muted/40"
                 >
                   <p className="font-medium">{q.question}</p>
+                  <p className="mt-1 text-xs uppercase tracking-wide text-primary">
+                    {q.difficulty}
+                  </p>
                   <ul className="mt-2 text-sm text-muted-foreground">
                     {q.options.map((opt: string, i: number) => (
                       <li key={i}>• {opt}</li>
@@ -406,27 +582,29 @@ export default function UploadPage() {
           )}
 
           {/* GENERATE FLASHCARDS */}
-          {text && (
-            <Button
-              onClick={generateFlashcards}
-              disabled={loadingFlashcards}
-              className="w-full"
-              variant="secondary"
-            >
-              {loadingFlashcards ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating flashcards...
-                </span>
-              ) : (
-                "Generate Flashcards"
-              )}
-            </Button>
+          {text && selectedMode === "flashcards" && (
+            <section ref={flashcardsSectionRef} className="space-y-2">
+              <Button
+                onClick={generateFlashcards}
+                disabled={loadingFlashcards}
+                className="w-full"
+                variant="secondary"
+              >
+                {loadingFlashcards ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating flashcards...
+                  </span>
+                ) : (
+                  "Generate Flashcards"
+                )}
+              </Button>
+            </section>
           )}
 
           {/* FLASHCARDS PREVIEW */}
-          {flashcards.length > 0 && (
-            <section className="space-y-4">
+          {selectedMode === "flashcards" && flashcards.length > 0 && (
+            <section ref={flashcardsSectionRef} className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   Generated Flashcards

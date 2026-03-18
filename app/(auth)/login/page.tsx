@@ -19,7 +19,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!normalizedEmail || !normalizedPassword) {
       toast.error("Please enter email and password");
       return;
     }
@@ -27,15 +30,20 @@ export default function LoginPage() {
     setLoading(true);
 
     const result = await signIn("credentials", {
-      email,
-      password,
+      email: normalizedEmail,
+      password: normalizedPassword,
       redirect: false,
     });
 
     setLoading(false);
 
     if (result?.error) {
-      toast.error("Invalid email or password");
+      if (result.error === "CredentialsSignin") {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      toast.error(`Login failed: ${result.error}`);
     } else {
       toast.success("Login successful");
       router.push("/home");

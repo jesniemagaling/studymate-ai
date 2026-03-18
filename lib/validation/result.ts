@@ -9,6 +9,7 @@ export const QuizQuestionSchema = z.object({
   question: z.string().min(1),
   options: z.array(z.string().min(1)).min(2),
   answer: z.string().min(1),
+  difficulty: z.enum(["easy", "medium", "hard"]),
 });
 
 export const QuizContentSchema = z.object({

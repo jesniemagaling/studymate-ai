@@ -62,31 +62,51 @@ function normalizeReviewerContent(raw: LegacyResult): {
 }
 
 function normalizeQuizContent(raw: LegacyResult): {
-  questions: { question: string; options: string[]; answer: string }[];
+  questions: {
+    question: string;
+    options: string[];
+    answer: string;
+    difficulty: "easy" | "medium" | "hard";
+  }[];
 } {
   if (QuizContentSchema.safeParse(raw.content).success) {
     return raw.content as {
-      questions: { question: string; options: string[]; answer: string }[];
-    };
-  }
-
-  if (Array.isArray(raw.content)) {
-    return {
-      questions: raw.content as {
+      questions: {
         question: string;
         options: string[];
         answer: string;
-      }[],
+        difficulty: "easy" | "medium" | "hard";
+      }[];
+    };
+  }
+
+  const withDefaultDifficulty = (items: unknown[]) => {
+    return items.map((item) => {
+      const q = item as {
+        question?: string;
+        options?: string[];
+        answer?: string;
+        difficulty?: "easy" | "medium" | "hard";
+      };
+
+      return {
+        question: q.question || "",
+        options: Array.isArray(q.options) ? q.options : [],
+        answer: q.answer || "",
+        difficulty: q.difficulty || "medium",
+      };
+    });
+  };
+
+  if (Array.isArray(raw.content)) {
+    return {
+      questions: withDefaultDifficulty(raw.content),
     };
   }
 
   if (Array.isArray(raw.quiz)) {
     return {
-      questions: raw.quiz as {
-        question: string;
-        options: string[];
-        answer: string;
-      }[],
+      questions: withDefaultDifficulty(raw.quiz),
     };
   }
 

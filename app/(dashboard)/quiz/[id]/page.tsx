@@ -115,6 +115,9 @@ export default function QuizPlayer() {
               </p>
 
               <p className="text-lg font-medium">{current.question}</p>
+              <p className="text-xs uppercase tracking-wide text-primary">
+                {current.difficulty}
+              </p>
 
               <div className="space-y-2">
                 {current.options.map((opt) => (

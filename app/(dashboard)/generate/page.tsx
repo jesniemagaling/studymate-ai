@@ -7,16 +7,19 @@ import { useRouter } from "next/navigation";
 
 const modes = [
   {
+    key: "reviewer",
     title: "Reviewer",
     description: "Generate a concise summary of key concepts",
     icon: Brain,
   },
   {
+    key: "quiz",
     title: "Quiz",
     description: "Create questions from easy to hard",
     icon: ListChecks,
   },
   {
+    key: "flashcards",
     title: "Flashcards",
     description: "Build flashcards for quick study",
     icon: Layers,
@@ -59,7 +62,7 @@ export default function GeneratePage() {
 
                   <Button
                     className="mt-auto w-full"
-                    onClick={() => router.push("/upload")}
+                    onClick={() => router.push(`/upload?mode=${mode.key}`)}
                   >
                     Select
                     <ArrowRight className="ml-2 h-4 w-4" />

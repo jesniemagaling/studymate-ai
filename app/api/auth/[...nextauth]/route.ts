@@ -25,20 +25,53 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials.password) return null;
+        if (!credentials?.email || !credentials.password) {
+          console.warn("[auth] Missing credentials payload");
+          return null;
+        }
 
-        await connectDB();
+        try {
+          await connectDB();
+        } catch (error) {
+          console.error("[auth] DB connection failed during authorize", error);
+          throw new Error("DB_CONNECTION_FAILED");
+        }
 
         const normalizedEmail = credentials.email.trim().toLowerCase();
+        const normalizedPassword = credentials.password.trim();
 
         const user = await User.findOne({ email: normalizedEmail });
-        if (!user || !user.password) return null;
+        if (!user || !user.password) {
+          console.warn("[auth] User not found or password missing", {
+            email: normalizedEmail,
+            hasUser: Boolean(user),
+          });
+          return null;
+        }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-        if (!isValid) return null;
+        let isValid = false;
+
+        // Default behavior: hashed password validation.
+        try {
+          isValid = await bcrypt.compare(normalizedPassword, user.password);
+        } catch {
+          isValid = false;
+        }
+
+        // Backward-safe fallback for legacy plaintext records.
+        if (!isValid && user.password === normalizedPassword) {
+          isValid = true;
+          const rehashedPassword = await bcrypt.hash(normalizedPassword, 10);
+          await User.updateOne(
+            { _id: user._id },
+            { $set: { password: rehashedPassword } },
+          );
+        }
+
+        if (!isValid) {
+          console.warn("[auth] Password mismatch", { email: normalizedEmail });
+          return null;
+        }
 
         return {
           id: user._id.toString(),

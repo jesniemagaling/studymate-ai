@@ -21,7 +21,16 @@ const PdfSchema = new Schema(
     },
     extractedText: {
       type: String,
+      default: "",
+    },
+    extractionStatus: {
+      type: String,
+      enum: ["success", "fallback", "failed"],
+      default: "success",
       required: true,
+    },
+    extractionError: {
+      type: String,
     },
   },
   {

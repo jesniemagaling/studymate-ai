@@ -9,6 +9,7 @@ export type QuizQuestion = {
   question: string;
   options: string[];
   answer: string;
+  difficulty: "easy" | "medium" | "hard";
 };
 
 export type QuizContent = {

@@ -6,9 +6,12 @@ import User from "@/models/User";
 export async function POST(req: Request) {
   try {
     const { firstName, lastName, email, password } = await req.json();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
 
     // Validate input
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !normalizedEmail || !password) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 },
@@ -18,7 +21,7 @@ export async function POST(req: Request) {
     await connectDB();
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
         { message: "Email is already registered" },
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
     await User.create({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
