@@ -18,6 +18,7 @@ export default function ResultViewerPage() {
   const id = params?.id as string;
 
   const [result, setResult] = useState<StudyResult | null>(null);
+  const [sourcePdfName, setSourcePdfName] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,33 @@ export default function ResultViewerPage() {
 
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (!result?.sourcePdfId) {
+      setSourcePdfName(null);
+      return;
+    }
+
+    const loadSourcePdf = async () => {
+      try {
+        const data = await apiFetch<{
+          pdf: {
+            fileName: string;
+          };
+        }>(`/api/pdf/get/${result.sourcePdfId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        setSourcePdfName(data.pdf.fileName || null);
+      } catch {
+        // Preserve core result rendering if source PDF lookup fails.
+        setSourcePdfName(null);
+      }
+    };
+
+    loadSourcePdf();
+  }, [result?.sourcePdfId]);
 
   const handleCopy = () => {
     if (!result?.content) return;
@@ -212,7 +240,7 @@ export default function ResultViewerPage() {
     try {
       const pdf = new jsPDF("p", "mm", "a4");
       const margin = 12;
-      const headerHeight = 16;
+      const headerHeight = 22;
       const footerHeight = 12;
       const lineHeight = 5.5;
       const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
@@ -251,10 +279,11 @@ export default function ResultViewerPage() {
 
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
+        // Keep timestamp below the top row so it never overlaps the type badge.
         pdf.text(
           `Exported: ${new Date().toLocaleString()}`,
           pageWidth + margin,
-          margin - 2,
+          margin + 5,
           { align: "right" },
         );
 
@@ -395,6 +424,15 @@ export default function ResultViewerPage() {
           <div className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-primary border">
             {result.type.toUpperCase()}
           </div>
+
+          {result.sourcePdfId && (
+            <p className="text-xs text-muted-foreground">
+              Generated from PDF:{" "}
+              <span className="font-medium text-foreground">
+                {sourcePdfName || "Unknown file"}
+              </span>
+            </p>
+          )}
 
           <ResultRenderer
             result={result}

@@ -9,6 +9,7 @@ export type LegacyResult = {
   _id: unknown;
   userId: string;
   title?: string;
+  sourcePdfId?: unknown;
   type?: "reviewer" | "quiz" | "flashcards";
   content?: unknown;
   reviewer?: string;
@@ -142,6 +143,7 @@ function normalizeFlashcardsContent(raw: LegacyResult): {
 export function normalizeStoredResult(raw: LegacyResult): NormalizedResult {
   const id = String(raw._id);
   const title = raw.title || "Untitled Result";
+  const sourcePdfId = raw.sourcePdfId ? String(raw.sourcePdfId) : undefined;
   const createdAt = toIsoDate(raw.createdAt);
   const updatedAt = toIsoDate(raw.updatedAt);
 
@@ -153,6 +155,7 @@ export function normalizeStoredResult(raw: LegacyResult): NormalizedResult {
         id,
         userId: raw.userId,
         title,
+        sourcePdfId,
         type: "quiz",
         content,
         createdAt,
@@ -170,6 +173,7 @@ export function normalizeStoredResult(raw: LegacyResult): NormalizedResult {
         id,
         userId: raw.userId,
         title,
+        sourcePdfId,
         type: "flashcards",
         content,
         createdAt,
@@ -186,6 +190,7 @@ export function normalizeStoredResult(raw: LegacyResult): NormalizedResult {
       id,
       userId: raw.userId,
       title,
+      sourcePdfId,
       type: "reviewer",
       content,
       createdAt,

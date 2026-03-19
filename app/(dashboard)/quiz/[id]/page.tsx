@@ -19,6 +19,9 @@ export default function QuizPlayer() {
   const [typedAnswer, setTypedAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [finalScore, setFinalScore] = useState<number | null>(null);
+  const [sourcePdfId, setSourcePdfId] = useState<string | undefined>(undefined);
+  const [attemptTracked, setAttemptTracked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +49,7 @@ export default function QuizPlayer() {
         }
 
         setQuiz(result.content.questions);
+        setSourcePdfId(result.sourcePdfId);
       } catch {
         toast.error("Failed to load quiz result.");
       } finally {
@@ -66,18 +70,55 @@ export default function QuizPlayer() {
 
     if (!submittedAnswer) return;
 
-    if (submittedAnswer.toLowerCase() === current.answer.toLowerCase()) {
-      setScore((prev) => prev + 1);
-    }
+    const isCorrect =
+      submittedAnswer.toLowerCase() === current.answer.toLowerCase();
+    const nextScore = isCorrect ? score + 1 : score;
+    setScore(nextScore);
 
     if (index + 1 < quiz.length) {
       setIndex((prev) => prev + 1);
       setSelected(null);
       setTypedAnswer("");
     } else {
+      setFinalScore(nextScore);
       setFinished(true);
     }
   };
+
+  useEffect(() => {
+    if (!finished || attemptTracked || finalScore === null || !quiz.length) {
+      return;
+    }
+
+    const trackAttempt = async () => {
+      try {
+        await fetch("/api/analytics/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            eventType: "quiz_attempt",
+            resultId: params?.id,
+            sourcePdfId,
+            score: finalScore,
+            totalQuestions: quiz.length,
+          }),
+        });
+      } catch {
+        // Do not block quiz completion for analytics failures.
+      }
+    };
+
+    setAttemptTracked(true);
+    trackAttempt();
+  }, [
+    finished,
+    attemptTracked,
+    finalScore,
+    quiz.length,
+    params?.id,
+    sourcePdfId,
+  ]);
 
   if (loading) {
     return (
@@ -231,7 +272,7 @@ export default function QuizPlayer() {
                 </p>
               </div>
               <p className="text-center text-lg font-semibold">
-                Score: {score} / {quiz.length}
+                Score: {finalScore ?? score} / {quiz.length}
               </p>
 
               <Button

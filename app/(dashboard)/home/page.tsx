@@ -20,6 +20,10 @@ type AnalyticsSummary = {
   quizzesGenerated: number;
   flashcardsGenerated: number;
   totalStudyMaterials: number;
+  totalQuizzesTaken: number;
+  averageQuizScore: number;
+  lastQuizScore: number | null;
+  lastQuizAttemptAt: string | null;
   lastGenerated: {
     title: string;
     type: "reviewer" | "quiz" | "flashcards";
@@ -36,11 +40,17 @@ export default function HomePage() {
     quizzesGenerated: 0,
     flashcardsGenerated: 0,
     totalStudyMaterials: 0,
+    totalQuizzesTaken: 0,
+    averageQuizScore: 0,
+    lastQuizScore: null,
+    lastQuizAttemptAt: null,
     lastGenerated: null,
   });
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const firstName = session?.user?.firstName || "Student";
+  const metricCardClass =
+    "group border-border/60 bg-gradient-to-b from-background to-muted/20 py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md";
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -68,7 +78,7 @@ export default function HomePage() {
 
   return (
     <section
-      className="mx-auto w-full max-w-6xl space-y-4 sm:space-y-6"
+      className="w-full space-y-4 sm:space-y-6"
       aria-label="Dashboard home"
     >
       <Card className="overflow-hidden border-none bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
@@ -107,9 +117,11 @@ export default function HomePage() {
       </Card>
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-border/60 transition-colors hover:border-primary/30">
-          <CardContent className="flex items-center gap-4 p-5">
-            <FileText className="h-10 w-10 text-primary" />
+        <Card className={metricCardClass}>
+          <CardContent className="flex items-center gap-4 px-5 py-4">
+            <div className="rounded-xl border bg-background p-2.5 shadow-sm">
+              <FileText className="h-6 w-6 text-primary" />
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">PDFs Uploaded</p>
               <p className="text-2xl font-bold">
@@ -119,9 +131,11 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 transition-colors hover:border-primary/30">
-          <CardContent className="flex items-center gap-4 p-5">
-            <Brain className="h-10 w-10 text-primary" />
+        <Card className={metricCardClass}>
+          <CardContent className="flex items-center gap-4 px-5 py-4">
+            <div className="rounded-xl border bg-background p-2.5 shadow-sm">
+              <Brain className="h-6 w-6 text-primary" />
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">
                 Reviewers Generated
@@ -133,9 +147,11 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 transition-colors hover:border-primary/30">
-          <CardContent className="flex items-center gap-4 p-5">
-            <Bookmark className="h-10 w-10 text-primary" />
+        <Card className={metricCardClass}>
+          <CardContent className="flex items-center gap-4 px-5 py-4">
+            <div className="rounded-xl border bg-background p-2.5 shadow-sm">
+              <Bookmark className="h-6 w-6 text-primary" />
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">Quizzes Generated</p>
               <p className="text-2xl font-bold">
@@ -145,9 +161,11 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 transition-colors hover:border-primary/30">
-          <CardContent className="flex items-center gap-4 p-5">
-            <Sparkles className="h-10 w-10 text-primary" />
+        <Card className={metricCardClass}>
+          <CardContent className="flex items-center gap-4 px-5 py-4">
+            <div className="rounded-xl border bg-background p-2.5 shadow-sm">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">
                 Flashcards Generated
@@ -160,41 +178,47 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-        <Card className="border-border/60 transition-colors hover:border-primary/30">
-          <CardContent className="flex flex-col justify-between gap-4 p-6">
-            <div className="flex items-center gap-3">
-              <UploadCloud className="h-7 w-7 text-primary" />
-              <div>
-                <p className="font-semibold">Upload PDF</p>
-                <p className="text-sm text-muted-foreground">
-                  Upload your study materials to get started
-                </p>
-              </div>
-            </div>
-            <Button onClick={() => router.push("/upload")}>Upload PDF</Button>
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+        <Card className={metricCardClass}>
+          <CardContent className="px-5 py-4">
+            <p className="text-sm text-muted-foreground">Total Quizzes Taken</p>
+            <p className="mt-1 text-2xl font-bold">
+              {loadingAnalytics ? "-" : analytics.totalQuizzesTaken}
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 transition-colors hover:border-primary/30">
-          <CardContent className="flex flex-col justify-between gap-4 p-6">
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-7 w-7 text-primary" />
-              <div>
-                <p className="font-semibold">Generate Study Materials</p>
-                <p className="text-sm text-muted-foreground">
-                  Create reviewers, quizzes, and flashcards
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={() => router.push("/generate")}>
-              Generate
-            </Button>
+        <Card className={metricCardClass}>
+          <CardContent className="px-5 py-4">
+            <p className="text-sm text-muted-foreground">Average Quiz Score</p>
+            <p className="mt-1 text-2xl font-bold">
+              {loadingAnalytics ? "-" : `${analytics.averageQuizScore}%`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={metricCardClass}>
+          <CardContent className="px-5 py-4">
+            <p className="text-sm text-muted-foreground">Last Quiz Score</p>
+            <p className="mt-1 text-2xl font-bold">
+              {loadingAnalytics
+                ? "-"
+                : analytics.lastQuizScore !== null
+                  ? `${analytics.lastQuizScore}%`
+                  : "N/A"}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {loadingAnalytics
+                ? ""
+                : analytics.lastQuizAttemptAt
+                  ? `Last attempt: ${new Date(analytics.lastQuizAttemptAt).toLocaleString()}`
+                  : "No attempts recorded yet"}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-border/60">
+      <Card className="border-border/60 bg-gradient-to-b from-background to-muted/20">
         <CardHeader>
           <CardTitle className="text-lg">Per-Content-Type Usage</CardTitle>
         </CardHeader>
@@ -240,7 +264,7 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/60">
+      <Card className="border-border/60 bg-gradient-to-b from-background to-muted/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Clock className="h-5 w-5 text-primary" />

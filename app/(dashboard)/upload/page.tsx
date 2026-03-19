@@ -61,6 +61,7 @@ function UploadPageContent() {
   const [flashcards, setFlashcards] = useState<FlashcardContent["cards"]>([]);
   const [loadingFlashcards, setLoadingFlashcards] = useState(false);
   const [manualTextMode, setManualTextMode] = useState(false);
+  const [sourcePdfId, setSourcePdfId] = useState<string | null>(null);
   const [resultTitle, setResultTitle] = useState("");
   const [quizItemCount, setQuizItemCount] = useState(5);
   const [quizQuestionType, setQuizQuestionType] = useState<
@@ -125,6 +126,7 @@ function UploadPageContent() {
         const extractedText = String(data.pdf.extractedText || "");
 
         if (data.pdf.extractionStatus === "failed") {
+          setSourcePdfId(pdfId);
           setManualTextMode(true);
           setText(extractedText);
           toast.warning(
@@ -137,6 +139,7 @@ function UploadPageContent() {
         setManualTextMode(false);
         setText(extractedText);
         setFile(null);
+        setSourcePdfId(pdfId);
 
         if (data.pdf.extractionStatus === "fallback") {
           toast.warning("Loaded recovered text from malformed PDF.");
@@ -178,6 +181,7 @@ function UploadPageContent() {
     setFlashcards([]);
     setResultTitle("");
     setManualTextMode(false);
+    setSourcePdfId(null);
 
     try {
       const formData = new FormData();
@@ -203,6 +207,7 @@ function UploadPageContent() {
       }
 
       if (data.extractionMode === "fallback" && data.text) {
+        setSourcePdfId(String(data.pdfId || "") || null);
         setManualTextMode(false);
         setText(data.text);
         toast.warning(
@@ -213,6 +218,7 @@ function UploadPageContent() {
       }
 
       if (data.needsManualText) {
+        setSourcePdfId(String(data.pdfId || "") || null);
         setManualTextMode(true);
         setText("");
         toast.warning(
@@ -223,6 +229,7 @@ function UploadPageContent() {
       }
 
       setManualTextMode(false);
+      setSourcePdfId(String(data.pdfId || "") || null);
       setText(data.text || "");
       toast.success("PDF uploaded and text extracted.");
     } catch {
@@ -350,6 +357,7 @@ function UploadPageContent() {
     try {
       const reviewerPayload = {
         title: resultTitle.trim() || createDefaultTitle("reviewer"),
+        sourcePdfId: sourcePdfId || undefined,
         type: "reviewer" as const,
         content: {
           summary: reviewer,
@@ -385,6 +393,7 @@ function UploadPageContent() {
     try {
       const quizPayload = {
         title: resultTitle.trim() || createDefaultTitle("quiz"),
+        sourcePdfId: sourcePdfId || undefined,
         type: "quiz" as const,
         content: {
           questions: quiz,
@@ -428,6 +437,7 @@ function UploadPageContent() {
     try {
       const flashcardsPayload = {
         title: resultTitle.trim() || createDefaultTitle("flashcards"),
+        sourcePdfId: sourcePdfId || undefined,
         type: "flashcards" as const,
         content: {
           cards: flashcards,
