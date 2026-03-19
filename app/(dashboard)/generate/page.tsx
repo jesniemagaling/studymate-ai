@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Brain, ListChecks, Layers, ArrowRight } from "lucide-react";
+import { Brain, ListChecks, Layers, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
@@ -33,8 +33,9 @@ export default function GeneratePage() {
   return (
     <ModulePage aria-label="Generate study materials">
       <ModuleCard>
-        <CardHeader className="space-y-2 pb-2">
-          <CardTitle className="text-xl font-semibold">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <Sparkles className="h-6 w-6 shrink-0 text-primary" />
             Generate Study Materials
           </CardTitle>
           <p className="text-sm text-muted-foreground">

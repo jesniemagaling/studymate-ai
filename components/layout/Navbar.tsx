@@ -41,7 +41,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => router.push("/home")}
-          className="group inline-flex items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group inline-flex items-center gap-2 rounded-md p-2 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Go to home"
         >
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary/20">

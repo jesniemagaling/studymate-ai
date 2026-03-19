@@ -181,36 +181,52 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-5 md:grid-cols-3">
         <Card className={metricCardClass}>
-          <CardContent className="px-5 py-4">
-            <p className="text-sm text-muted-foreground">Total Quizzes Taken</p>
-            <p className="mt-1 text-2xl font-bold">
-              {loadingAnalytics ? "-" : analytics.totalQuizzesTaken}
+          <CardContent className="flex min-h-[124px] flex-col justify-between px-4 py-4 sm:px-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Total Quizzes Taken
+              </p>
+              <p className="mt-1 text-4xl font-semibold leading-none">
+                {loadingAnalytics ? "-" : analytics.totalQuizzesTaken}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Completed quiz attempts
             </p>
           </CardContent>
         </Card>
 
         <Card className={metricCardClass}>
-          <CardContent className="px-5 py-4">
-            <p className="text-sm text-muted-foreground">Average Quiz Score</p>
-            <p className="mt-1 text-2xl font-bold">
-              {loadingAnalytics ? "-" : `${analytics.averageQuizScore}%`}
-            </p>
+          <CardContent className="flex min-h-[124px] flex-col justify-between px-4 py-4 sm:px-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Average Quiz Score
+              </p>
+              <p className="mt-1 text-4xl font-semibold leading-none">
+                {loadingAnalytics ? "-" : `${analytics.averageQuizScore}%`}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">Across all attempts</p>
           </CardContent>
         </Card>
 
         <Card className={metricCardClass}>
-          <CardContent className="px-5 py-4">
-            <p className="text-sm text-muted-foreground">Last Quiz Score</p>
-            <p className="mt-1 text-2xl font-bold">
-              {loadingAnalytics
-                ? "-"
-                : analytics.lastQuizScore !== null
-                  ? `${analytics.lastQuizScore}%`
-                  : "N/A"}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
+          <CardContent className="flex min-h-[124px] flex-col justify-between px-4 py-4 sm:px-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Last Quiz Score
+              </p>
+              <p className="mt-1 text-4xl font-semibold leading-none">
+                {loadingAnalytics
+                  ? "-"
+                  : analytics.lastQuizScore !== null
+                    ? `${analytics.lastQuizScore}%`
+                    : "N/A"}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
               {loadingAnalytics
                 ? ""
                 : analytics.lastQuizAttemptAt

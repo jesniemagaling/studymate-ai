@@ -484,9 +484,9 @@ function UploadPageContent() {
           hasRichContent ? "max-h-[calc(100vh-8.5rem)]" : ""
         }`}
       >
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <UploadCloud className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <UploadCloud className="h-6 w-6 shrink-0 text-primary" />
             Upload & Generate Study Materials
           </CardTitle>
           <p className="text-sm text-muted-foreground">
