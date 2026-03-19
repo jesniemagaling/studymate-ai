@@ -37,6 +37,7 @@ export type StudyResultBase = {
   id: string;
   userId: string;
   title: string;
+  sourcePdfId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -60,6 +61,7 @@ export type StudyResult = ReviewerResult | QuizResult | FlashcardsResult;
 
 export type SaveResultBody = {
   title?: string;
+  sourcePdfId?: string;
 } & (
   | { type: "reviewer"; content: ReviewerContent }
   | { type: "quiz"; content: QuizContent }

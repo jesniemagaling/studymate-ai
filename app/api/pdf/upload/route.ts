@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       return apiSuccess(
         {
           message: result.message,
+          pdfId: result.pdfId,
           text: result.text,
         },
         result.message,
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
       return apiSuccess(
         {
           message: result.message,
+          pdfId: result.pdfId,
           needsManualText: false,
           extractionMode: "fallback",
           code: result.code,
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest) {
     return apiSuccess(
       {
         message: result.message,
+        pdfId: result.pdfId,
         needsManualText: true,
         extractionMode: "failed",
         code: result.code,

@@ -33,16 +33,19 @@ export const SaveResultSchema = z
       type: z.literal("reviewer"),
       content: ReviewerContentSchema,
       title: z.string().trim().optional(),
+      sourcePdfId: z.string().trim().optional(),
     }),
     z.object({
       type: z.literal("quiz"),
       content: QuizContentSchema,
       title: z.string().trim().optional(),
+      sourcePdfId: z.string().trim().optional(),
     }),
     z.object({
       type: z.literal("flashcards"),
       content: FlashcardContentSchema,
       title: z.string().trim().optional(),
+      sourcePdfId: z.string().trim().optional(),
     }),
   ])
   .superRefine((payload, ctx) => {

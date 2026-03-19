@@ -35,6 +35,7 @@ export async function saveResultForUser(userId: string, rawBody: unknown) {
       userId,
       title: parsed.title?.trim() || "Untitled Result",
       type: parsed.type,
+      sourcePdfId: parsed.sourcePdfId?.trim() || undefined,
       content: parsed.content,
     });
 

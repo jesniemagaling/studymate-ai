@@ -9,12 +9,14 @@ import Pdf from "@/models/Pdf";
 type PdfUploadSuccess = {
   status: "success";
   message: string;
+  pdfId: string;
   text: string;
 };
 
 type PdfUploadFallback = {
   status: "fallback";
   message: string;
+  pdfId: string;
   text: string;
   warning: string;
   code: "MALFORMED_PDF" | "EMPTY_TEXT";
@@ -23,6 +25,7 @@ type PdfUploadFallback = {
 type PdfUploadFailed = {
   status: "failed";
   message: string;
+  pdfId: string;
   text: "";
   warning: string;
   code: "MALFORMED_PDF" | "EMPTY_TEXT";
@@ -46,7 +49,7 @@ export async function processPdfUpload(input: {
     const text = await extractTextFromPDF(buffer);
 
     await connectDB();
-    await Pdf.create({
+    const created = await Pdf.create({
       userId,
       fileName,
       mimeType,
@@ -58,6 +61,7 @@ export async function processPdfUpload(input: {
     return {
       status: "success",
       message: "PDF processed successfully",
+      pdfId: String(created._id),
       text,
     };
   } catch (error) {
@@ -72,7 +76,7 @@ export async function processPdfUpload(input: {
     const fallbackText = extractTextFromPDFMalformedFallback(buffer);
 
     await connectDB();
-    await Pdf.create({
+    const created = await Pdf.create({
       userId,
       fileName,
       mimeType,
@@ -87,6 +91,7 @@ export async function processPdfUpload(input: {
         status: "fallback",
         message:
           "PDF uploaded. We auto-recovered text from a malformed file; review it before generating.",
+        pdfId: String(created._id),
         text: fallbackText,
         warning: error.message,
         code: error.code,
@@ -97,6 +102,7 @@ export async function processPdfUpload(input: {
       status: "failed",
       message:
         "PDF uploaded, but text extraction failed. You can paste text manually to continue.",
+      pdfId: String(created._id),
       text: "",
       warning: error.message,
       code: error.code,

@@ -18,6 +18,13 @@ const ResultSchema = new Schema(
       required: true,
     },
 
+    sourcePdfId: {
+      type: Schema.Types.ObjectId,
+      ref: "Pdf",
+      index: true,
+      required: false,
+    },
+
     content: {
       type: Schema.Types.Mixed,
       required: true,
