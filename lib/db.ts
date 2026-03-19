@@ -10,13 +10,6 @@ declare global {
   var mongooseCache: MongooseCache | undefined;
 }
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-const MONGODB_URI_DIRECT = process.env.MONGODB_URI_DIRECT;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define MONGODB_URI in .env.local");
-}
-
 const cached: MongooseCache =
   globalThis.mongooseCache ??
   (globalThis.mongooseCache = { conn: null, promise: null });
@@ -35,22 +28,29 @@ function isMongoDnsLookupError(error: unknown) {
 }
 
 export async function connectDB() {
+  const mongoUri = process.env.MONGODB_URI;
+  const mongoUriDirect = process.env.MONGODB_URI_DIRECT;
+
+  if (!mongoUri) {
+    throw new Error("Please define MONGODB_URI in .env.local");
+  }
+
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
     cached.promise = (async () => {
       try {
-        return await mongoose.connect(MONGODB_URI, {
+        return await mongoose.connect(mongoUri, {
           bufferCommands: false,
           serverSelectionTimeoutMS: 10000,
         });
       } catch (primaryError) {
-        if (!MONGODB_URI_DIRECT) {
+        if (!mongoUriDirect) {
           throw primaryError;
         }
 
         try {
-          return await mongoose.connect(MONGODB_URI_DIRECT, {
+          return await mongoose.connect(mongoUriDirect, {
             bufferCommands: false,
             serverSelectionTimeoutMS: 10000,
           });
