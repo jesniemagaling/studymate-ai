@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { openai } from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 
 function buildMockReviewer(text: string) {
   const cleaned = text
@@ -64,6 +64,12 @@ export async function POST(req: NextRequest) {
     if (process.env.MOCK_AI_REVIEWER === "true") {
       return NextResponse.json({ reviewer: buildMockReviewer(text) });
     }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ reviewer: buildMockReviewer(text) });
+    }
+
+    const openai = getOpenAIClient();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
