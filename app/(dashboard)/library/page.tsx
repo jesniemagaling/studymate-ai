@@ -14,6 +14,7 @@ import { FileText, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api/client";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 type PdfLibraryItem = {
   id: string;
@@ -92,11 +93,8 @@ export default function LibraryPage() {
   };
 
   return (
-    <section
-      className="mx-auto w-full max-w-5xl space-y-4"
-      aria-label="PDF library"
-    >
-      <Card className="w-full border-border/60 py-4 shadow-sm">
+    <ModulePage aria-label="PDF library">
+      <ModuleCard>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileText className="h-6 w-6 text-primary" />
@@ -204,7 +202,7 @@ export default function LibraryPage() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </ModuleCard>
 
       <Dialog open={openView} onOpenChange={setOpenView}>
         <DialogContent className="sm:max-w-3xl">
@@ -275,6 +273,6 @@ export default function LibraryPage() {
           )}
         </DialogContent>
       </Dialog>
-    </section>
+    </ModulePage>
   );
 }

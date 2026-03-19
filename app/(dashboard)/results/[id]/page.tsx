@@ -11,6 +11,7 @@ import jsPDF from "jspdf";
 import type { StudyResult } from "@/types/result";
 import { ResultRenderer } from "@/components/results/ResultRenderer";
 import { apiFetch } from "@/lib/api/client";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 export default function ResultViewerPage() {
   const router = useRouter();
@@ -365,11 +366,8 @@ export default function ResultViewerPage() {
   }
 
   return (
-    <section
-      className="mx-auto w-full max-w-5xl space-y-4"
-      aria-label="Result details"
-    >
-      <Card className="w-full border-border/60 py-4 shadow-sm">
+    <ModulePage aria-label="Result details">
+      <ModuleCard>
         <CardHeader className="flex flex-wrap items-center justify-between gap-3 pb-2">
           <div className="flex min-w-0 items-center gap-3">
             <Button
@@ -444,7 +442,7 @@ export default function ResultViewerPage() {
             Saved on: {new Date(result.createdAt).toLocaleString()}
           </p>
         </CardContent>
-      </Card>
-    </section>
+      </ModuleCard>
+    </ModulePage>
   );
 }

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Brain, ListChecks, Layers, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 const modes = [
   {
@@ -30,11 +31,8 @@ export default function GeneratePage() {
   const router = useRouter();
 
   return (
-    <section
-      className="mx-auto w-full max-w-5xl space-y-4"
-      aria-label="Generate study materials"
-    >
-      <Card className="w-full border-border/60 py-4 shadow-sm">
+    <ModulePage aria-label="Generate study materials">
+      <ModuleCard>
         <CardHeader className="space-y-2 pb-2">
           <CardTitle className="text-xl font-semibold">
             Generate Study Materials
@@ -75,7 +73,7 @@ export default function GeneratePage() {
             ))}
           </div>
         </CardContent>
-      </Card>
-    </section>
+      </ModuleCard>
+    </ModulePage>
   );
 }

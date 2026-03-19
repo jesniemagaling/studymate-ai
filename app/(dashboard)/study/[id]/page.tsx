@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { ArrowLeft, RotateCcw, BookOpen } from "lucide-react";
 import type { FlashcardContent, StudyResult } from "@/types/result";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 export default function FlashcardStudy() {
   const params = useParams<{ id: string }>();
@@ -54,26 +55,20 @@ export default function FlashcardStudy() {
 
   if (loading) {
     return (
-      <section
-        className="mx-auto w-full max-w-5xl space-y-4"
-        aria-label="Flashcard study loading"
-      >
-        <Card className="w-full border-border/60 py-4 shadow-sm">
+      <ModulePage aria-label="Flashcard study loading">
+        <ModuleCard>
           <CardContent className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
             Loading flashcards...
           </CardContent>
-        </Card>
-      </section>
+        </ModuleCard>
+      </ModulePage>
     );
   }
 
   if (!cards.length) {
     return (
-      <section
-        className="mx-auto w-full max-w-5xl space-y-4"
-        aria-label="Flashcard study empty"
-      >
-        <Card className="w-full border-border/60 py-4 shadow-sm">
+      <ModulePage aria-label="Flashcard study empty">
+        <ModuleCard>
           <CardContent className="flex flex-col items-center justify-center rounded-lg border border-dashed p-10 text-center">
             <BookOpen className="mb-3 h-10 w-10 text-muted-foreground" />
             <p className="text-sm font-medium">No flashcard data found</p>
@@ -88,17 +83,14 @@ export default function FlashcardStudy() {
               Back to Results
             </Button>
           </CardContent>
-        </Card>
-      </section>
+        </ModuleCard>
+      </ModulePage>
     );
   }
 
   return (
-    <section
-      className="mx-auto w-full max-w-5xl space-y-4"
-      aria-label="Flashcard study mode"
-    >
-      <Card className="w-full border-border/60 py-4 shadow-sm">
+    <ModulePage aria-label="Flashcard study mode">
+      <ModuleCard>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Flashcard Study Mode</CardTitle>
           <Button
@@ -168,7 +160,7 @@ export default function FlashcardStudy() {
             </Button>
           </div>
         </CardContent>
-      </Card>
-    </section>
+      </ModuleCard>
+    </ModulePage>
   );
 }

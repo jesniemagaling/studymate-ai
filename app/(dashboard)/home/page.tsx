@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { ModulePage } from "@/components/layout/ModuleShell";
 
 type AnalyticsSummary = {
   pdfsUploaded: number;
@@ -49,8 +50,10 @@ export default function HomePage() {
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const firstName = session?.user?.firstName || "Student";
-  const metricCardClass =
-    "group border-border/60 bg-gradient-to-b from-background to-muted/20 py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md";
+  const heroSurfaceClass =
+    "overflow-hidden border-none bg-gradient-to-br from-primary/10 via-background to-background shadow-sm";
+  const surfaceCardClass = "border-border/60 bg-card shadow-sm";
+  const metricCardClass = `group ${surfaceCardClass} py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md`;
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -77,11 +80,11 @@ export default function HomePage() {
   }, []);
 
   return (
-    <section
-      className="w-full space-y-4 sm:space-y-6"
+    <ModulePage
+      className="max-w-7xl space-y-4 sm:space-y-6"
       aria-label="Dashboard home"
     >
-      <Card className="overflow-hidden border-none bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
+      <Card className={heroSurfaceClass}>
         <CardContent className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
@@ -218,7 +221,7 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <Card className="border-border/60 bg-gradient-to-b from-background to-muted/20">
+      <Card>
         <CardHeader>
           <CardTitle className="text-lg">Per-Content-Type Usage</CardTitle>
         </CardHeader>
@@ -264,7 +267,7 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/60 bg-gradient-to-b from-background to-muted/20">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Clock className="h-5 w-5 text-primary" />
@@ -300,6 +303,6 @@ export default function HomePage() {
           )}
         </CardContent>
       </Card>
-    </section>
+    </ModulePage>
   );
 }

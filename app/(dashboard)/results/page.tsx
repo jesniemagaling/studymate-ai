@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { StudyResult } from "@/types/result";
 import { apiFetch } from "@/lib/api/client";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -38,11 +39,8 @@ export default function ResultsPage() {
   }, []);
 
   return (
-    <section
-      className="mx-auto w-full max-w-5xl space-y-4"
-      aria-label="Generated results"
-    >
-      <Card className="w-full border-border/60 py-4 shadow-sm">
+    <ModulePage aria-label="Generated results">
+      <ModuleCard>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileSearch className="h-6 w-6 text-primary" />
@@ -115,7 +113,7 @@ export default function ResultsPage() {
             </div>
           )}
         </CardContent>
-      </Card>
-    </section>
+      </ModuleCard>
+    </ModulePage>
   );
 }

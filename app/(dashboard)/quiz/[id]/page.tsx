@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ArrowLeft, CircleCheck, ListChecks } from "lucide-react";
 import type { QuizContent, StudyResult } from "@/types/result";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 export default function QuizPlayer() {
   const params = useParams<{ id: string }>();
@@ -122,26 +123,20 @@ export default function QuizPlayer() {
 
   if (loading) {
     return (
-      <section
-        className="mx-auto w-full max-w-4xl space-y-4"
-        aria-label="Quiz practice loading"
-      >
-        <Card className="w-full border-border/60 py-4 shadow-sm">
+      <ModulePage className="max-w-4xl" aria-label="Quiz practice loading">
+        <ModuleCard>
           <CardContent className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
             Loading quiz...
           </CardContent>
-        </Card>
-      </section>
+        </ModuleCard>
+      </ModulePage>
     );
   }
 
   if (!quiz.length) {
     return (
-      <section
-        className="mx-auto w-full max-w-4xl space-y-4"
-        aria-label="Quiz practice empty"
-      >
-        <Card className="w-full border-border/60 py-4 shadow-sm">
+      <ModulePage className="max-w-4xl" aria-label="Quiz practice empty">
+        <ModuleCard>
           <CardContent className="flex flex-col items-center justify-center rounded-lg border border-dashed p-10 text-center">
             <ListChecks className="mb-3 h-10 w-10 text-muted-foreground" />
             <p className="text-sm font-medium">No quiz data found</p>
@@ -156,17 +151,14 @@ export default function QuizPlayer() {
               Back to Results
             </Button>
           </CardContent>
-        </Card>
-      </section>
+        </ModuleCard>
+      </ModulePage>
     );
   }
 
   return (
-    <section
-      className="mx-auto w-full max-w-4xl space-y-4"
-      aria-label="Quiz practice"
-    >
-      <Card className="w-full border-border/60 py-4 shadow-sm">
+    <ModulePage className="max-w-4xl" aria-label="Quiz practice">
+      <ModuleCard>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-2xl">Quiz Practice</CardTitle>
           <Button
@@ -284,7 +276,7 @@ export default function QuizPlayer() {
             </div>
           )}
         </CardContent>
-      </Card>
-    </section>
+      </ModuleCard>
+    </ModulePage>
   );
 }

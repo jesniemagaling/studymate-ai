@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardContent, QuizContent } from "@/types/result";
+import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
 type GenerationMode = "reviewer" | "quiz" | "flashcards";
 
@@ -477,9 +478,9 @@ function UploadPageContent() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-2 sm:px-0">
-      <Card
-        className={`flex w-full flex-col overflow-hidden py-4 shadow-md ${
+    <ModulePage className="px-2 sm:px-0">
+      <ModuleCard
+        className={`flex w-full flex-col overflow-hidden ${
           hasRichContent ? "max-h-[calc(100vh-8.5rem)]" : ""
         }`}
       >
@@ -864,8 +865,8 @@ function UploadPageContent() {
             </section>
           )}
         </CardContent>
-      </Card>
-    </div>
+      </ModuleCard>
+    </ModulePage>
   );
 }
 
