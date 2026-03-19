@@ -2,7 +2,7 @@
 
 ## 1. System Overview
 
-StudyMate AI is a Next.js full-stack application that transforms uploaded PDF materials into reviewer summaries, quizzes, and flashcards. It supports save-and-practice workflows, analytics, and PDF export of generated results.
+StudyMate AI is a Next.js full-stack application that transforms uploaded PDF materials into reviewer summaries, quizzes, and flashcards. It supports a continuous study loop (generate, practice, analyze), analytics, and PDF export of generated results.
 
 ## 2. Current End-to-End Workflow
 
@@ -13,6 +13,7 @@ StudyMate AI is a Next.js full-stack application that transforms uploaded PDF ma
 5. User saves output to Results collection.
 6. User can directly continue to Quiz Practice or Flashcard Study via save-and-start actions.
 7. User can review, edit title, delete, and export saved results.
+8. Quiz attempts are tracked to produce average score, total attempts, and latest score insights.
 
 ## 3. Architecture
 
@@ -64,7 +65,9 @@ StudyMate AI is a Next.js full-stack application that transforms uploaded PDF ma
 2. `Pdf`
    1. `userId`, `fileName`, `mimeType`, `size`, `extractedText`, `extractionStatus`, `extractionError`, timestamps.
 3. `Result`
-   1. `userId`, `title`, `type` (`reviewer|quiz|flashcards`), `content`, timestamps.
+   1. `userId`, `title`, `type` (`reviewer|quiz|flashcards`), `sourcePdfId`, `content`, timestamps.
+4. `Analytics`
+   1. `userId`, `eventType`, `resultId`, `sourcePdfId`, `score`, `totalQuestions`, `percentage`, timestamps.
 
 ## 6. API Surface (Current)
 
@@ -87,9 +90,20 @@ StudyMate AI is a Next.js full-stack application that transforms uploaded PDF ma
    5. `DELETE /api/results/delete/[id]`
 5. Analytics:
    1. `GET /api/analytics/track`
+   2. `POST /api/analytics/track` (quiz attempt event ingestion)
 
 ## 7. Notes on Reliability and Quality
 
 1. Result export avoids DOM screenshot parsing issues by using structured text-to-PDF generation.
 2. API routes are being standardized around service-layer and envelope patterns to improve maintainability.
 3. Protected route coverage includes quiz and study paths.
+4. Reviewer generation fallback behavior:
+   1. If AI is unavailable or quota-limited, the system returns simplified keyword/sentence-based reviewer output.
+   2. The response is surfaced to users as limited/fallback generation mode.
+
+## 8. Limitations
+
+1. AI output quality depends on input text quality.
+2. Very large PDFs may require chunking and staged processing as future enhancement.
+3. Offline mode is not supported.
+4. Full request rate limiting is currently documented as a requirement; additional enforcement hardening is planned.

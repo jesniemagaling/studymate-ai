@@ -37,7 +37,8 @@ StudyMate AI is a web-based learning platform that converts uploaded PDF study m
    1. Save & Start Quiz.
    2. Save & Start Study.
 8. PDF export for saved results with branded header/footer and page numbering.
-9. Analytics summary dashboard (uploads, generated content counts, latest activity).
+9. Analytics summary dashboard (uploads, generated content counts, latest activity, quiz performance metrics).
+10. Continuous study loop: Upload -> Generate -> Save -> Practice -> Analyze -> Improve.
 
 ## 5. Functional Requirements
 
@@ -48,7 +49,7 @@ StudyMate AI is a web-based learning platform that converts uploaded PDF study m
 5. Users must be able to save generated outputs and retrieve them later.
 6. Users must be able to practice saved quiz and flashcard outputs.
 7. Users must be able to update result titles, delete results, and export results to PDF.
-8. Users must be able to view basic analytics for their own activity.
+8. Users must be able to view analytics for activity and quiz performance (total attempts, average score, last score).
 
 ## 6. Non-Functional Requirements
 
@@ -57,3 +58,4 @@ StudyMate AI is a web-based learning platform that converts uploaded PDF study m
 3. Reliability: Saved PDFs/results must remain retrievable and editable per user.
 4. Usability: Dashboard modules must use consistent UI patterns for loading, empty states, and actions.
 5. Maintainability: Service-layer route design and standardized API envelopes should be used to reduce duplication.
+6. Abuse protection: The system should enforce per-user rate limits for upload and generation endpoints.
