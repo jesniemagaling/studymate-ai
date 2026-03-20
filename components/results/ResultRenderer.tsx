@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BookOpen, ListChecks } from "lucide-react";
+import { BookOpen, ListChecks, Sparkles } from "lucide-react";
 
 import type {
   FlashcardsResult,
@@ -13,20 +13,26 @@ import type {
 function ReviewerView({ data }: { data: ReviewerResult["content"] }) {
   return (
     <div className="space-y-4">
-      <pre className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm leading-relaxed">
-        {data.summary}
-      </pre>
+      <div className="rounded-xl border bg-background/60 p-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+          Reviewer Summary
+        </p>
+        <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+          {data.summary}
+        </pre>
+      </div>
 
       {data.keyPoints.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-muted-foreground">
+        <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <Sparkles className="h-4 w-4 text-primary" />
             Key Points
           </h3>
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-1.5 text-sm">
             {data.keyPoints.map((point, index) => (
               <li
                 key={`${point}-${index}`}
-                className="rounded-md border bg-muted/40 px-3 py-2"
+                className="rounded-md border bg-background px-3 py-2"
               >
                 {point}
               </li>
@@ -47,17 +53,24 @@ function QuizView({
 }) {
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-2 text-sm text-muted-foreground">
+        Preview generated questions below, then start practice mode.
+      </div>
+
       {data.questions.map((q, i) => (
         <div
           key={`${q.question}-${i}`}
-          className="rounded-lg border bg-muted/40 p-4"
+          className="rounded-xl border bg-muted/30 p-4"
         >
-          <p className="mb-2 font-semibold">
-            {i + 1}. {q.question}
-          </p>
-          <p className="mb-2 text-xs uppercase tracking-wide text-primary">
-            {q.difficulty}
-          </p>
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <p className="font-semibold leading-relaxed">
+              {i + 1}. {q.question}
+            </p>
+            <p className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs uppercase tracking-wide text-primary">
+              {q.difficulty}
+            </p>
+          </div>
+
           {q.contextHint && (
             <details className="mb-2 rounded-md border border-dashed bg-background/50 px-3 py-2">
               <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
@@ -68,13 +81,16 @@ function QuizView({
               </p>
             </details>
           )}
-          <div className="ml-4 space-y-1">
-            {q.options.map((opt) => (
-              <p key={opt} className="text-sm text-muted-foreground">
-                • {opt}
-              </p>
-            ))}
-          </div>
+
+          {q.questionType !== "fill_in_blank" && (
+            <div className="ml-1 space-y-1">
+              {q.options.map((opt) => (
+                <p key={opt} className="text-sm text-muted-foreground">
+                  • {opt}
+                </p>
+              ))}
+            </div>
+          )}
           <details className="mt-2 rounded-md border border-dashed bg-background/50 px-3 py-2">
             <summary className="cursor-pointer text-xs font-medium text-primary">
               Show answer

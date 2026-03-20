@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ArrowLeft, CircleCheck, ListChecks } from "lucide-react";
+import { ArrowLeft, CircleCheck, ListChecks, Sparkles } from "lucide-react";
 import type { QuizContent, StudyResult } from "@/types/result";
 import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
 
@@ -159,28 +159,49 @@ export default function QuizPlayer() {
   return (
     <ModulePage className="max-w-4xl" aria-label="Quiz practice">
       <ModuleCard>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-2xl">Quiz Practice</CardTitle>
+        <CardHeader className="grid gap-4 border-b pb-5 md:grid-cols-[1fr_auto] md:items-start">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+              StudyMate AI
+            </p>
+            <CardTitle className="text-2xl font-semibold tracking-tight">
+              Quiz Practice
+            </CardTitle>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Practice one question at a time and track your score as you go.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                {quiz.length} questions loaded
+              </span>
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                <Sparkles className="mr-1 h-3.5 w-3.5" />
+                Practice Mode
+              </span>
+            </div>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => router.push("/results")}
+            className="w-full md:w-auto"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         </CardHeader>
 
-        <CardContent className="pb-0">
-          <p className="text-sm text-muted-foreground">
-            Practice one question at a time and track your score as you go.
+        <CardContent className="pt-5">
+          <p className="rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-2 text-sm text-muted-foreground">
+            Answer each question before moving on. Use hints when needed.
           </p>
         </CardContent>
 
         <CardContent className="space-y-5">
           {!finished && current ? (
             <>
-              <div className="space-y-2">
+              <div className="space-y-2 rounded-lg border bg-background/60 p-3">
                 <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
                   <p>
                     Question {index + 1} / {quiz.length}
@@ -197,9 +218,11 @@ export default function QuizPlayer() {
                 </div>
               </div>
 
-              <p className="text-2xl font-semibold leading-tight">
-                {current.question}
-              </p>
+              <div className="rounded-xl border bg-muted/30 p-4">
+                <p className="text-2xl font-semibold leading-tight">
+                  {current.question}
+                </p>
+              </div>
 
               {current.contextHint && (
                 <details className="rounded-lg border border-dashed bg-muted/20 px-3 py-2">
@@ -244,7 +267,7 @@ export default function QuizPlayer() {
               )}
 
               <Button
-                className="mt-2 h-11 w-full"
+                className="h-11 w-full"
                 onClick={submitAnswer}
                 disabled={
                   current.questionType === "fill_in_blank"
@@ -256,7 +279,7 @@ export default function QuizPlayer() {
               </Button>
             </>
           ) : (
-            <div className="space-y-4 py-4 text-center">
+            <div className="space-y-4 rounded-xl border bg-background/60 p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-primary">
                 <CircleCheck className="h-5 w-5" />
                 <p className="text-center text-2xl font-bold">

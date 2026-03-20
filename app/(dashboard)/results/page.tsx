@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileSearch, FileText, ArrowRight } from "lucide-react";
+import { FileSearch, FileText, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { StudyResult } from "@/types/result";
@@ -41,27 +41,36 @@ export default function ResultsPage() {
   return (
     <ModulePage aria-label="Generated results">
       <ModuleCard>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+        <CardHeader className="space-y-1 border-b pb-5">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold tracking-tight">
             <FileSearch className="h-6 w-6 text-primary" />
             Generated Results
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Review, practice, export, or manage your saved study outputs.
           </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              {loading ? "Loading..." : `${results.length} saved results`}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              <Sparkles className="mr-1 h-3.5 w-3.5" />
+              Study Library
+            </span>
+          </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="">
           {/* LOADING STATE */}
           {loading && (
-            <div className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-border/70 bg-background/60 py-12 text-center text-muted-foreground">
               Loading results...
             </div>
           )}
 
           {/* EMPTY STATE */}
           {!loading && results.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-background/60 p-12 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-background shadow-sm">
                 <FileSearch className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -79,20 +88,20 @@ export default function ResultsPage() {
               {results.map((result) => (
                 <Card
                   key={result.id}
-                  className="border-border/60 py-3 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
+                  className="border-border/60 bg-muted/20 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                 >
-                  <CardContent className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-3">
+                  <CardContent className="flex flex-col gap-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <FileText className="h-6 w-6 text-primary" />
 
-                      <div>
-                        <p className="font-medium">
+                      <div className="min-w-0">
+                        <p className="font-medium leading-relaxed">
                           {result.title || "Untitled result"}
                         </p>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        <p className="inline-flex rounded-full border border-border/70 px-2 py-0.5 text-xs uppercase tracking-wide text-muted-foreground">
                           {result.type}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="mt-1 text-xs text-muted-foreground">
                           Saved on{" "}
                           {new Date(result.createdAt).toLocaleDateString()}
                         </p>
@@ -102,6 +111,7 @@ export default function ResultsPage() {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full sm:w-auto"
                       onClick={() => router.push(`/results/${result.id}`)}
                     >
                       View

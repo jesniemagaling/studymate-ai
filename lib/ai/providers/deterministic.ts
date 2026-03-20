@@ -2,6 +2,7 @@ import {
   generateQuizQuestions,
   type GeneratedQuizQuestion,
 } from "@/lib/services/quiz-generator";
+import { sanitizeStudyText } from "@/lib/text/sanitize";
 import type {
   Flashcard,
   GenerationContext,
@@ -10,11 +11,13 @@ import type {
 } from "@/lib/ai/types";
 
 export function buildDeterministicReviewer(text: string) {
-  const cleaned = text
-    .replace(/\r/g, "\n")
-    .replace(/\n{2,}/g, "\n")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cleaned = sanitizeStudyText(
+    text
+      .replace(/\r/g, "\n")
+      .replace(/\n{2,}/g, "\n")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
 
   const sentenceCandidates = cleaned
     .split(/[.!?]+/)
@@ -38,16 +41,18 @@ export function buildDeterministicReviewer(text: string) {
     }
   }
 
-  const summary = uniqueSentences.slice(0, 2).join(". ");
+  const summary = uniqueSentences.slice(0, 3).join(". ");
   const keyPoints = uniqueSentences
     .slice(0, 5)
-    .map(
-      (sentence) => `- ${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}`,
+    .map((sentence) =>
+      sanitizeStudyText(
+        `- ${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}`,
+      ),
     );
 
   return [
     "Summary:",
-    summary || cleaned.slice(0, 400),
+    sanitizeStudyText(summary || cleaned.slice(0, 520)),
     "",
     "Key Points:",
     ...(keyPoints.length ? keyPoints : ["- No key points extracted."]),
@@ -55,11 +60,16 @@ export function buildDeterministicReviewer(text: string) {
 }
 
 function buildDeterministicFlashcards(text: string): Flashcard[] {
-  const sentences = text
+  const sentences = sanitizeStudyText(text)
     .split(".")
-    .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 20)
+    .map((sentence) => sanitizeStudyText(sentence))
+    .filter((sentence) => sentence.length > 24)
     .slice(0, 20);
+
+  const seen = new Set<string>();
+
+  const capitalizeFirst = (value: string) =>
+    value.replace(/^([a-z])/, (match) => match.toUpperCase());
 
   return sentences.map((sentence, index) => {
     const words = sentence.split(/\s+/);
@@ -67,10 +77,19 @@ function buildDeterministicFlashcards(text: string): Flashcard[] {
       words.find((word) => word.length > 6 && /^[A-Za-z]+$/.test(word)) ||
       `Concept ${index + 1}`;
 
+    const normalizedKeyword = sanitizeStudyText(keyword);
+    const baseKeyword = seen.has(normalizedKeyword.toLowerCase())
+      ? `${normalizedKeyword} ${index + 1}`
+      : normalizedKeyword;
+    seen.add(normalizedKeyword.toLowerCase());
+
+    const formattedKeyword = capitalizeFirst(baseKeyword);
+    const formattedBack = capitalizeFirst(sanitizeStudyText(`${sentence}.`));
+
     return {
-      front: `What is ${keyword}?`,
-      back: `${sentence}.`,
-      keyword,
+      front: sanitizeStudyText(`What is ${formattedKeyword}?`),
+      back: formattedBack,
+      keyword: formattedKeyword,
     };
   });
 }

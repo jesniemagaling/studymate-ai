@@ -5,6 +5,7 @@ import { resolveProviderOrder } from "@/lib/ai/provider-plan";
 import { deterministicProvider } from "@/lib/ai/providers/deterministic";
 import { localOllamaProvider } from "@/lib/ai/providers/local-ollama";
 import { openAIProvider } from "@/lib/ai/providers/openai";
+import { sanitizeStudyText } from "@/lib/text/sanitize";
 import type {
   FlashcardGenerationInput,
   GenerationMode,
@@ -121,7 +122,12 @@ export async function generateFlashcards(input: FlashcardGenerationInput) {
   });
 
   return {
-    flashcards: data,
+    flashcards: data.map((card) => ({
+      ...card,
+      front: sanitizeStudyText(card.front),
+      back: sanitizeStudyText(card.back),
+      keyword: card.keyword ? sanitizeStudyText(card.keyword) : undefined,
+    })),
     telemetry,
     chunking: context.chunking,
   };

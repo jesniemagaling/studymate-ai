@@ -7,7 +7,7 @@ export const ReviewerContentSchema = z.object({
 
 export const QuizQuestionSchema = z.object({
   question: z.string().min(1),
-  options: z.array(z.string().min(1)).min(2),
+  options: z.array(z.string().min(1)).default([]),
   answer: z.string().min(1),
   difficulty: z.enum(["easy", "medium", "hard"]),
   questionType: z.enum(["multiple_choice", "fill_in_blank"]).optional(),
@@ -51,6 +51,21 @@ export const SaveResultSchema = z
   .superRefine((payload, ctx) => {
     if (payload.type === "quiz") {
       payload.content.questions.forEach((q, i) => {
+        const questionType = q.questionType || "multiple_choice";
+
+        if (questionType === "fill_in_blank") {
+          return;
+        }
+
+        if (q.options.length < 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Multiple-choice questions must have at least 2 options",
+            path: ["content", "questions", i, "options"],
+          });
+          return;
+        }
+
         if (!q.options.includes(q.answer)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,

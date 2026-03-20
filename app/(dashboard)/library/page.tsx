@@ -95,7 +95,7 @@ export default function LibraryPage() {
   return (
     <ModulePage aria-label="PDF library">
       <ModuleCard>
-        <CardHeader className="pb-3">
+        <CardHeader className="space-y-1 border-b pb-5">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileText className="h-6 w-6 text-primary" />
             My PDF Library
@@ -106,7 +106,7 @@ export default function LibraryPage() {
           </p>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pt-5">
           {loading ? (
             <div className="rounded-lg border border-dashed py-12 text-center text-muted-foreground">
               Loading library...
@@ -140,27 +140,29 @@ export default function LibraryPage() {
               {pdfs.map((pdf) => (
                 <Card
                   key={pdf.id}
-                  className="border-border/60 bg-muted/30 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+                  className="overflow-hidden border-border/60 bg-muted/30 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                 >
-                  <CardContent className="space-y-4 p-5">
+                  <CardContent className="space-y-3.5 p-4 sm:p-5">
                     <div className="flex items-start gap-3">
                       <div className="rounded-md border bg-background p-1.5">
                         <FileText className="h-4 w-4 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-base font-semibold leading-tight">
+                        <p className="line-clamp-2 break-all text-[15px] font-semibold leading-snug sm:text-base">
                           {pdf.fileName}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           {(pdf.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
                     </div>
 
-                    <p className="line-clamp-3 min-h-[4.5rem] text-sm leading-relaxed text-muted-foreground">
-                      {pdf.extractedTextPreview ||
-                        "No extracted preview available."}
-                    </p>
+                    <div className="rounded-md border bg-background/50 p-3">
+                      <p className="line-clamp-3 min-h-[3.9rem] text-sm leading-relaxed text-muted-foreground">
+                        {pdf.extractedTextPreview ||
+                          "No extracted preview available."}
+                      </p>
+                    </div>
 
                     {pdf.extractionStatus === "fallback" && (
                       <p className="text-xs text-amber-500">
@@ -183,14 +185,14 @@ export default function LibraryPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="w-full"
+                        className="h-9 w-full"
                         onClick={() => handleViewPdf(pdf.id)}
                       >
                         View
                       </Button>
                       <Button
                         size="sm"
-                        className="w-full"
+                        className="h-9 w-full"
                         onClick={() => router.push(`/upload?pdfId=${pdf.id}`)}
                       >
                         Use This PDF
@@ -205,7 +207,7 @@ export default function LibraryPage() {
       </ModuleCard>
 
       <Dialog open={openView} onOpenChange={setOpenView}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{selectedPdf?.fileName || "PDF Preview"}</DialogTitle>
             <DialogDescription>
@@ -249,7 +251,7 @@ export default function LibraryPage() {
                 </p>
               )}
 
-              <div className="max-h-[52vh] overflow-y-auto rounded-lg border bg-background p-4 text-sm leading-relaxed whitespace-pre-wrap">
+              <div className="max-h-[50vh] overflow-y-auto rounded-lg border bg-background p-4 text-sm leading-relaxed whitespace-pre-wrap sm:max-h-[52vh]">
                 {selectedPdf?.extractedText?.trim() ||
                   "No extracted text available."}
               </div>

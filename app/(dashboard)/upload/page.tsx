@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -484,7 +484,7 @@ function UploadPageContent() {
           hasRichContent ? "max-h-[calc(100vh-8.5rem)]" : ""
         }`}
       >
-        <CardHeader className="pb-2">
+        <CardHeader className="space-y-1 border-b pb-5">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <UploadCloud className="h-6 w-6 shrink-0 text-primary" />
             Upload & Generate Study Materials
@@ -498,7 +498,7 @@ function UploadPageContent() {
         <CardContent
           className={`${
             hasRichContent ? "min-h-0 flex-1 overflow-y-auto pr-2" : ""
-          } space-y-6`}
+          } space-y-6 pt-5`}
         >
           {/* UPLOAD BOX */}
           <label
@@ -621,11 +621,15 @@ function UploadPageContent() {
           {/* REVIEWER OUTPUT */}
           {selectedMode === "reviewer" && reviewer && (
             <section ref={reviewerSectionRef} className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   AI Reviewer Output
                 </h3>
-                <Button size="sm" onClick={saveReviewer}>
+                <Button
+                  size="sm"
+                  onClick={saveReviewer}
+                  className="w-full sm:w-auto"
+                >
                   Save Result
                 </Button>
               </div>
@@ -756,19 +760,24 @@ function UploadPageContent() {
           {/* QUIZ OUTPUT */}
           {selectedMode === "quiz" && quiz.length > 0 && (
             <section ref={quizSectionRef} className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   Generated Quiz
                 </h3>
-                <div className="flex gap-2">
+                <div className="grid w-full gap-2 sm:flex sm:w-auto">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => saveQuiz(false)}
+                    className="w-full sm:w-auto"
                   >
                     Save Result
                   </Button>
-                  <Button size="sm" onClick={() => saveQuiz(true)}>
+                  <Button
+                    size="sm"
+                    onClick={() => saveQuiz(true)}
+                    className="w-full sm:w-auto"
+                  >
                     Save & Start Quiz
                   </Button>
                 </div>
@@ -790,11 +799,13 @@ function UploadPageContent() {
                   <p className="mt-1 text-xs uppercase tracking-wide text-primary">
                     {q.difficulty}
                   </p>
-                  <ul className="mt-2 text-sm text-muted-foreground">
-                    {q.options.map((opt: string, i: number) => (
-                      <li key={i}>• {opt}</li>
-                    ))}
-                  </ul>
+                  {q.questionType !== "fill_in_blank" && (
+                    <ul className="mt-2 text-sm text-muted-foreground">
+                      {q.options.map((opt: string, i: number) => (
+                        <li key={i}>• {opt}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))}
             </section>
@@ -824,19 +835,24 @@ function UploadPageContent() {
           {/* FLASHCARDS PREVIEW */}
           {selectedMode === "flashcards" && flashcards.length > 0 && (
             <section ref={flashcardsSectionRef} className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   Generated Flashcards
                 </h3>
-                <div className="flex gap-2">
+                <div className="grid w-full gap-2 sm:flex sm:w-auto">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => saveFlashcards(false)}
+                    className="w-full sm:w-auto"
                   >
                     Save Result
                   </Button>
-                  <Button size="sm" onClick={() => saveFlashcards(true)}>
+                  <Button
+                    size="sm"
+                    onClick={() => saveFlashcards(true)}
+                    className="w-full sm:w-auto"
+                  >
                     Save & Start Study
                   </Button>
                 </div>

@@ -4,6 +4,7 @@ import {
   QuizContentSchema,
   ReviewerContentSchema,
 } from "@/lib/validation/result";
+import { sanitizeStudyText } from "@/lib/text/sanitize";
 
 export type LegacyResult = {
   _id: unknown;
@@ -34,7 +35,11 @@ function normalizeReviewerContent(raw: LegacyResult): {
   keyPoints: string[];
 } {
   if (ReviewerContentSchema.safeParse(raw.content).success) {
-    return raw.content as { summary: string; keyPoints: string[] };
+    const content = raw.content as { summary: string; keyPoints: string[] };
+    return {
+      summary: sanitizeStudyText(content.summary),
+      keyPoints: content.keyPoints.map((point) => sanitizeStudyText(point)),
+    };
   }
 
   if (typeof raw.content === "string") {
@@ -45,17 +50,21 @@ function normalizeReviewerContent(raw: LegacyResult): {
       .filter(Boolean)
       .slice(0, 5);
 
-    return { summary, keyPoints };
+    return {
+      summary: sanitizeStudyText(summary),
+      keyPoints: keyPoints.map((point) => sanitizeStudyText(point)),
+    };
   }
 
   if (typeof raw.reviewer === "string") {
     return {
-      summary: raw.reviewer,
+      summary: sanitizeStudyText(raw.reviewer),
       keyPoints: raw.reviewer
         .split("\n")
         .map((line) => line.trim().replace(/^[-*]\s*/, ""))
         .filter(Boolean)
-        .slice(0, 5),
+        .slice(0, 5)
+        .map((point) => sanitizeStudyText(point)),
     };
   }
 
@@ -73,7 +82,7 @@ function normalizeQuizContent(raw: LegacyResult): {
   }[];
 } {
   if (QuizContentSchema.safeParse(raw.content).success) {
-    return raw.content as {
+    const content = raw.content as {
       questions: {
         question: string;
         options: string[];
@@ -82,6 +91,18 @@ function normalizeQuizContent(raw: LegacyResult): {
         questionType?: "multiple_choice" | "fill_in_blank";
         contextHint?: string;
       }[];
+    };
+
+    return {
+      questions: content.questions.map((q) => ({
+        ...q,
+        question: sanitizeStudyText(q.question),
+        options: q.options.map((opt) => sanitizeStudyText(opt)),
+        answer: sanitizeStudyText(q.answer),
+        contextHint: q.contextHint
+          ? sanitizeStudyText(q.contextHint)
+          : undefined,
+      })),
     };
   }
 
@@ -97,12 +118,16 @@ function normalizeQuizContent(raw: LegacyResult): {
       };
 
       return {
-        question: q.question || "",
-        options: Array.isArray(q.options) ? q.options : [],
-        answer: q.answer || "",
+        question: sanitizeStudyText(q.question || ""),
+        options: Array.isArray(q.options)
+          ? q.options.map((opt) => sanitizeStudyText(opt))
+          : [],
+        answer: sanitizeStudyText(q.answer || ""),
         difficulty: q.difficulty || "medium",
         questionType: q.questionType || "multiple_choice",
-        contextHint: q.contextHint,
+        contextHint: q.contextHint
+          ? sanitizeStudyText(q.contextHint)
+          : undefined,
       };
     });
   };
@@ -125,16 +150,42 @@ function normalizeQuizContent(raw: LegacyResult): {
 function normalizeFlashcardsContent(raw: LegacyResult): {
   cards: { front: string; back: string }[];
 } {
+  const capitalizeLeadingWord = (value: string) => {
+    const trimmed = sanitizeStudyText(value);
+    if (!trimmed) return "";
+
+    return trimmed.replace(/^([a-z])/, (match) => match.toUpperCase());
+  };
+
+  const sanitizeCards = (cards: { front: string; back: string }[]) => {
+    return cards.map((card) => ({
+      front: sanitizeStudyText(card.front).replace(
+        /^What is\s+([a-z])(.*)\?$/,
+        (_, first: string, rest: string) =>
+          `What is ${first.toUpperCase()}${rest}?`,
+      ),
+      back: capitalizeLeadingWord(card.back),
+    }));
+  };
+
   if (FlashcardContentSchema.safeParse(raw.content).success) {
-    return raw.content as { cards: { front: string; back: string }[] };
+    return {
+      cards: sanitizeCards(
+        (raw.content as { cards: { front: string; back: string }[] }).cards,
+      ),
+    };
   }
 
   if (Array.isArray(raw.content)) {
-    return { cards: raw.content as { front: string; back: string }[] };
+    return {
+      cards: sanitizeCards(raw.content as { front: string; back: string }[]),
+    };
   }
 
   if (Array.isArray(raw.flashcards)) {
-    return { cards: raw.flashcards as { front: string; back: string }[] };
+    return {
+      cards: sanitizeCards(raw.flashcards as { front: string; back: string }[]),
+    };
   }
 
   return { cards: [] };

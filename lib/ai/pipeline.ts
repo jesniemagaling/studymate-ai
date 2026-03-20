@@ -1,12 +1,15 @@
 import { getAIPipelineConfig, type AIPipelineConfig } from "@/lib/ai/config";
 import type { GenerationContext, GenerationMode } from "@/lib/ai/types";
+import { sanitizeStudyText } from "@/lib/text/sanitize";
 
 function normalizeText(raw: string) {
-  return raw
-    .replace(/\r/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/\s+/g, " ")
-    .trim();
+  return sanitizeStudyText(
+    raw
+      .replace(/\r/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 function createChunks(text: string, chunkSize: number, overlap: number) {

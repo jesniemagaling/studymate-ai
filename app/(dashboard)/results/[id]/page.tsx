@@ -2,16 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Copy, Trash2, FileText, Download } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Copy,
+  Trash2,
+  FileText,
+  Download,
+} from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import type { StudyResult } from "@/types/result";
 import { ResultRenderer } from "@/components/results/ResultRenderer";
 import { apiFetch } from "@/lib/api/client";
 import { ModuleCard, ModulePage } from "@/components/layout/ModuleShell";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ResultViewerPage() {
   const router = useRouter();
@@ -23,6 +38,8 @@ export default function ResultViewerPage() {
   const [titleInput, setTitleInput] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch the result from backend
   useEffect(() => {
@@ -121,7 +138,7 @@ export default function ResultViewerPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this result?")) return;
+    setDeleting(true);
 
     try {
       await apiFetch(`/api/results/delete/${id}`, {
@@ -130,11 +147,14 @@ export default function ResultViewerPage() {
       });
 
       toast.success("Deleted successfully");
+      setDeleteDialogOpen(false);
       router.push("/results");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to delete";
       toast.error(message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -368,35 +388,51 @@ export default function ResultViewerPage() {
   return (
     <ModulePage aria-label="Result details">
       <ModuleCard>
-        <CardHeader className="flex flex-wrap items-center justify-between gap-3 pb-2">
-          <div className="flex min-w-0 items-center gap-3">
+        <CardHeader className="flex flex-col gap-3 pb-2 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex w-full min-w-0 items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.push("/results")}
+              className="shrink-0"
               aria-label="Back to results"
             >
               <ArrowLeft />
             </Button>
 
-            <CardTitle className="flex min-w-0 items-center gap-2 text-xl font-semibold">
-              <FileText className="h-6 w-6 text-primary" />
-              <span className="truncate">
+            <CardTitle className="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold sm:text-xl">
+              <FileText className="h-6 w-6 shrink-0 text-primary" />
+              <span className="block min-w-0 truncate">
                 {result.title || "Generated Result"}
               </span>
             </CardTitle>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopy}>
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto lg:min-w-[420px]">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              className="h-9 w-full"
+            >
               <Copy className="h-4 w-4 mr-1" /> Copy
             </Button>
 
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              className="h-9 w-full"
+            >
               <Download className="h-4 w-4 mr-1" /> Export PDF
             </Button>
 
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="col-span-2 h-9 w-full sm:col-span-1"
+            >
               <Trash2 className="h-4 w-4 mr-1" /> Delete
             </Button>
           </div>
@@ -408,12 +444,12 @@ export default function ResultViewerPage() {
               value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="Edit result title"
-              className="h-10"
+              className="h-10 min-w-0"
             />
             <Button
               onClick={handleSaveTitle}
               disabled={savingTitle}
-              className="sm:w-auto"
+              className="w-full shrink-0 sm:w-auto"
             >
               {savingTitle ? "Saving..." : "Save Title"}
             </Button>
@@ -443,6 +479,46 @@ export default function ResultViewerPage() {
           </p>
         </CardContent>
       </ModuleCard>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="border-destructive/30 p-0 sm:max-w-md">
+          <DialogHeader className="space-y-3 border-b bg-destructive/5 p-6 pb-4">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <DialogTitle className="text-xl">Delete this result?</DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              This action cannot be undone. This will permanently remove
+              <span className="font-medium text-foreground">
+                {" "}
+                {result.title || "this saved result"}
+              </span>
+              .
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 p-6 pt-4 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleting}
+              className="sm:min-w-24"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="sm:min-w-24"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ModulePage>
   );
 }

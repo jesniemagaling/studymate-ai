@@ -33,7 +33,7 @@ export default function GeneratePage() {
   return (
     <ModulePage aria-label="Generate study materials">
       <ModuleCard>
-        <CardHeader className="pb-2">
+        <CardHeader className="space-y-1 border-b pb-5">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <Sparkles className="h-6 w-6 shrink-0 text-primary" />
             Generate Study Materials
@@ -44,7 +44,7 @@ export default function GeneratePage() {
           </p>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pt-5">
           <div className="grid gap-4 md:grid-cols-3">
             {modes.map((mode) => (
               <Card
