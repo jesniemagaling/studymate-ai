@@ -1,122 +1,154 @@
 # StudyMate AI
 
-**StudyMate AI** is an AI-powered study companion built using Next.js, TypeScript, and Tailwind CSS.
-It was developed as a learning and capstone-style project to explore full-stack web development, authentication, database integration, and AI-powered features using modern web technologies.
-The project focuses on transforming PDF study materials into useful learning tools such as reviewers, quizzes, and flashcards.
+StudyMate AI is a full-stack AI-powered learning platform that transforms uploaded PDFs into reviewer notes, quizzes, and flashcards in a secure, mobile-responsive dashboard.
 
----
+<p align="left">
+	<img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs">
+	<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript">
+	<img alt="Tailwind" src="https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss">
+	<img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-Mongoose-16a34a?logo=mongodb">
+	<img alt="Auth" src="https://img.shields.io/badge/Auth-NextAuth-orange">
+	<img alt="License" src="https://img.shields.io/badge/License-MIT-lightgrey">
+</p>
 
-## Overview
+## Table of Contents
 
-This project was built to deepen knowledge in modern full-stack development using Next.js and AI integration.
-With StudyMate AI, users can:
+- [Project Overview](#project-overview)
+- [Screenshots](#screenshots)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Architecture Highlights](#architecture-highlights)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [AI Provider Modes](#ai-provider-modes)
+- [Testing](#testing)
+- [Deployment Checklist](#deployment-checklist)
 
-1. Upload PDF study materials
-2. Extract text from uploaded PDFs
-3. Generate AI-powered reviewers, quizzes, and flashcards
-4. Save and reuse uploaded PDFs
-5. View generated study results
-6. Track basic usage analytics
+## Project Overview
 
-It is a hands-on, intermediate-level project that demonstrates real-world application architecture, secure authentication, and AI-assisted learning features in a clean and modern UI.
+StudyMate AI was built to explore production-style full-stack development with secure authentication, database-backed user workflows, and AI-assisted content generation.
 
----
+Users can:
+
+1. Upload PDF study materials and extract text.
+2. Generate study outputs as reviewer summaries, quizzes, and flashcards.
+3. Save generated outputs and reopen them in dedicated study modes.
+4. Reuse previously uploaded documents from a personal PDF library.
+5. Access protected dashboard pages with secure session handling.
+6. Track usage through analytics events.
+
+## Screenshots
+
+### Home
+
+<img src="docs/images/home-1.png" alt="StudyMate AI Home Screen 1" width="100%" />
+<br />
+<img src="docs/images/home-2.png" alt="StudyMate AI Home Screen 2" width="100%" />
+
+### Generate and Upload
+
+<img src="docs/images/generate.png" alt="Generate module" width="100%" />
+<br />
+<img src="docs/images/upload.png" alt="Upload module" width="100%" />
+
+### Library
+
+<img src="docs/images/library.png" alt="Library list view" width="100%" />
+<br />
+<img src="docs/images/library-view.png" alt="Library preview dialog" width="100%" />
+
+### Results Overview
+
+<img src="docs/images/results.png" alt="Generated results page" width="100%" />
+
+### Reviewer Result
+
+<img src="docs/images/results-reviewer.png" alt="Reviewer result output" width="100%" />
+
+### Quiz Result
+
+<img src="docs/images/results-quiz-1.png" alt="Quiz result output 1" width="100%" />
+<br />
+<img src="docs/images/results-quiz-2.png" alt="Quiz result output 2" width="100%" />
+
+### Flashcards Result
+
+<img src="docs/images/results-flashcard-1.png" alt="Flashcard result output 1" width="100%" />
+<br />
+<img src="docs/images/results-flashcard-2.png" alt="Flashcard result output 2" width="100%" />
 
 ## Key Features
 
-- User authentication with Email & Google OAuth
-- Secure dashboard with protected routes
-- PDF upload and text extraction
-- AI-powered study material generation with deterministic and optional local LLM providers
-- Personal PDF library per user
-- Saved AI-generated results
-- Basic analytics dashboard
-- Responsive and modern UI using Tailwind CSS
-- Modular and scalable project structure with Next.js App Router
-
----
+- Email/password and Google OAuth sign-in with NextAuth.
+- Cloudflare Turnstile bot protection on auth flows.
+- Email verification code requirement before account creation.
+- Protected dashboard routes and user-scoped data access.
+- PDF upload, parsing, and recovery handling for malformed files.
+- AI generation pipeline for reviewer, quiz, and flashcards.
+- Quiz generation controls for difficulty, type, and item count.
+- Personal PDF library with quick reuse and preview.
+- Save, list, view, and delete generated study results.
+- Responsive UI across desktop and mobile dashboards.
 
 ## Tech Stack
 
-- **Next.js** – Full-stack React framework (App Router)
-- **TypeScript** – Type-safe development
-- **Tailwind CSS** – Utility-first styling for responsive design
-- **MongoDB + Mongoose** – Database and data modeling
-- **NextAuth.js** – Authentication and session management
-- **OpenAI API (optional)** - Paid-provider adapter, disabled by default
-- **Local LLM via Ollama (optional)** - Zero-subscription local generation mode
-- **pdf-parse** – Server-side PDF text extraction
-- **Node.js** – Runtime environment
+- Next.js 16 (App Router)
+- React 18
+- TypeScript 5
+- Tailwind CSS 4
+- MongoDB + Mongoose
+- NextAuth.js
+- pdf-parse
+- Zod
+- Vitest + Playwright
+- OpenAI adapter (optional)
+- Local LLM integration via Ollama (optional)
 
----
+## Architecture Highlights
+
+- Feature-based app routes under `app/(dashboard)` and `app/api`.
+- API route separation for auth, PDF workflows, AI generation, and results.
+- Shared modular UI shell components for consistent module pages.
+- Result normalization and validation for stable rendering across versions.
+- Config-driven AI provider selection with safe default mode.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js v18 or later
-- npm or yarn
-- MongoDB Atlas account
-- OpenAI API key (optional; only needed when explicitly enabling paid providers)
-- Code editor (VS Code recommended)
-
----
+- Node.js v20 or later
+- npm
+- MongoDB Atlas (or compatible MongoDB instance)
+- Google OAuth app credentials (for Google sign-in)
+- SMTP provider credentials (for verification email delivery)
 
 ### Installation
 
 ```bash
-# Clone this repository
 git clone https://github.com/jesniemagaling/studymate-ai.git
-
-# Go into the project folder
 cd studymate-ai
-
-# Install dependencies
 npm install
+```
 
-# Start the development server
+Create `.env.local` (see [Environment Variables](#environment-variables)), then run:
+
+```bash
 npm run dev
 ```
 
-## Testing
+## Environment Variables
 
-This project uses a modern test stack:
-
-- `Vitest` for unit and integration tests
-- `Playwright` for end-to-end smoke tests
-
-Run tests locally:
-
-```bash
-# Unit + integration
-npm run test
-
-# Coverage report
-npm run test:coverage
-
-# E2E tests
-npm run test:e2e
-```
-
-CI workflows:
-
-- `.github/workflows/ci.yml` runs lint, tests, and build on push/PR
-- `.github/workflows/e2e.yml` runs Playwright tests manually via workflow dispatch
-
-## Auth Security Setup
-
-StudyMate AI now supports:
-
-- Cloudflare Turnstile bot protection for login and registration code requests
-- Email verification code before account creation
-
-Set these variables in `.env.local`:
+Add these in `.env.local`:
 
 ```bash
 # Core auth and database
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=replace-with-long-random-secret
 MONGODB_URI=your-mongodb-uri
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Cloudflare Turnstile
 TURNSTILE_ENABLED=true
@@ -130,45 +162,16 @@ SMTP_SECURE=false
 SMTP_USER=your-smtp-username
 SMTP_PASS=your-smtp-password
 SMTP_FROM="StudyMate AI <no-reply@yourdomain.com>"
-```
 
-Notes:
-
-- If `TURNSTILE_ENABLED=false`, server-side Turnstile checks are bypassed.
-- Registration requires a valid email code sent through SMTP before creating an account.
-
-## AI Provider Modes
-
-The generation pipeline supports a structured provider interface with safe defaults:
-
-- `deterministic` (default): zero-cost rule-based generation
-- `local-first`: use local model first (for example, Ollama), then fallback to deterministic
-- `openai`: available only when explicitly enabled and paid providers are allowed
-
-Environment flags:
-
-```bash
+# AI provider defaults (safe / zero-cost)
 AI_PIPELINE_VERSION=v2-free-local
 AI_PROVIDER_MODE=deterministic
 AI_ENABLE_LOCAL_PROVIDER=false
-AI_LOCAL_BASE_URL=http://127.0.0.1:11434
-AI_LOCAL_MODEL=llama3.1:8b
-AI_LOCAL_TIMEOUT_MS=12000
-
-# Hard safety switch: keep false to prevent paid API charges
 AI_ALLOW_PAID_PROVIDERS=false
-
-# Must also be true to use OpenAI adapter
 AI_ENABLE_OPENAI_ADAPTER=false
 ```
 
-With the default values above, the app never incurs OpenAI token charges.
-
-### Default Admin Bootstrap
-
-For first-time setup, the app can auto-create a default admin account during credentials login flow.
-
-Default values:
+Optional admin bootstrap:
 
 ```bash
 DEFAULT_ADMIN_ENABLED=true
@@ -178,4 +181,55 @@ DEFAULT_ADMIN_FIRST_NAME=System
 DEFAULT_ADMIN_LAST_NAME=Admin
 ```
 
-You can override these in `.env.local`.
+## AI Provider Modes
+
+StudyMate AI supports three provider modes:
+
+- `deterministic` (default): rule-based, zero-subscription generation.
+- `local-first`: use local model first, then fallback to deterministic.
+- `openai`: available only when explicitly enabled and paid providers are allowed.
+
+Safety notes:
+
+- Keep `AI_ALLOW_PAID_PROVIDERS=false` to avoid paid API usage.
+- Set both `AI_ALLOW_PAID_PROVIDERS=true` and `AI_ENABLE_OPENAI_ADAPTER=true` to enable OpenAI mode.
+
+## Testing
+
+Run quality checks:
+
+```bash
+# Lint
+npm run lint
+
+# Unit + integration tests
+npm run test
+
+# Coverage
+npm run test:coverage
+
+# E2E tests
+npm run test:e2e
+
+# Production build
+npm run build
+```
+
+CI workflows:
+
+- `.github/workflows/ci.yml` runs lint, tests, and build on push/PR.
+- `.github/workflows/e2e.yml` runs Playwright tests manually via workflow dispatch.
+
+## Deployment Checklist
+
+Before deploying:
+
+1. Confirm all required environment variables are configured in production.
+2. Verify Google OAuth callback URL and domain settings.
+3. Ensure Turnstile keys match the deployed domain.
+4. Run `npm run lint`, `npm run test`, and `npm run build`.
+5. Test login, upload, generate, save, and study flows on mobile and desktop.
+
+---
+
+Built as a personal project to demonstrate practical full-stack engineering, secure auth design, and AI-assisted learning workflows.
