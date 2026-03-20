@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, LogOut, Menu, X, Sparkles } from "lucide-react";
@@ -21,6 +21,41 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [canViewSettings, setCanViewSettings] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAccess = async () => {
+      try {
+        const res = await fetch("/api/ai/settings", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!mounted) return;
+
+        setCanViewSettings(Boolean(data?.canEdit));
+      } catch {
+        if (!mounted) return;
+        setCanViewSettings(false);
+      }
+    };
+
+    loadAccess();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const visibleLinks = useMemo(() => {
+    return canViewSettings
+      ? [...navLinks, { label: "Settings", href: "/settings" }]
+      : navLinks;
+  }, [canViewSettings]);
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
@@ -53,7 +88,7 @@ export default function Navbar() {
         </button>
 
         <div className="hidden items-center gap-1 md:flex" role="menubar">
-          {navLinks.map((link) => (
+          {visibleLinks.map((link) => (
             <Button
               key={link.href}
               variant={pathname === link.href ? "default" : "ghost"}
@@ -112,7 +147,7 @@ export default function Navbar() {
         )}
       >
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
-          {navLinks.map((link) => (
+          {visibleLinks.map((link) => (
             <Button
               key={link.href}
               variant={pathname === link.href ? "default" : "ghost"}
