@@ -48,6 +48,7 @@ export default function TurnstileWidget({
     widgetIdRef.current = window.turnstile.render(widgetContainerRef.current, {
       sitekey: siteKey,
       theme: "auto",
+      size: "flexible",
       callback: (token: string) => onTokenChange(token),
       "expired-callback": () => onTokenChange(null),
       "error-callback": () => onTokenChange(null),
@@ -71,20 +72,20 @@ export default function TurnstileWidget({
 
   if (!siteKey) {
     return (
-      <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+      <p className="rounded-lg border border-dashed border-border/70 bg-transparent px-3 py-2 text-xs text-muted-foreground">
         Bot protection is not configured yet.
       </p>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="w-full space-y-2">
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
-        onLoad={() => setScriptReady(true)}
+        onReady={() => setScriptReady(true)}
       />
-      <div ref={widgetContainerRef} className="min-h-[65px]" />
+      <div ref={widgetContainerRef} className="min-h-[65px] max-w-full" />
     </div>
   );
 }

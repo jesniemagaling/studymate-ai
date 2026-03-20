@@ -5,6 +5,8 @@ import bcrypt from "bcrypt";
 
 import User from "@/models/User";
 import { connectDB } from "@/lib/db";
+import { ensureDefaultAdminUser } from "@/lib/auth/bootstrap-admin";
+import { verifyTurnstileToken } from "@/lib/security/turnstile";
 
 const handler = NextAuth({
   session: {
@@ -23,6 +25,7 @@ const handler = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        turnstileToken: { label: "Turnstile Token", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
@@ -30,8 +33,20 @@ const handler = NextAuth({
           return null;
         }
 
+        const botCheck = await verifyTurnstileToken({
+          token: credentials.turnstileToken,
+        });
+
+        if (!botCheck.success) {
+          console.warn("[auth] Turnstile verification failed", {
+            reason: botCheck.message,
+          });
+          throw new Error("BOT_VERIFICATION_FAILED");
+        }
+
         try {
           await connectDB();
+          await ensureDefaultAdminUser();
         } catch (error) {
           console.error("[auth] DB connection failed during authorize", error);
           throw new Error("DB_CONNECTION_FAILED");
@@ -83,6 +98,23 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      try {
+        const target = new URL(url);
+        if (target.origin === baseUrl) {
+          return url;
+        }
+      } catch {
+        // Fall through to safe default.
+      }
+
+      return `${baseUrl}/home`;
+    },
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

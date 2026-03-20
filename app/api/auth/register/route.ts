@@ -2,16 +2,26 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import { ensureDefaultAdminUser } from "@/lib/auth/bootstrap-admin";
+import EmailVerificationCode from "@/models/EmailVerificationCode";
 
 export async function POST(req: Request) {
   try {
-    const { firstName, lastName, email, password } = await req.json();
+    const { firstName, lastName, email, password, verificationCode } =
+      await req.json();
     const normalizedEmail = String(email || "")
       .trim()
       .toLowerCase();
+    const normalizedCode = String(verificationCode || "").trim();
 
     // Validate input
-    if (!firstName || !lastName || !normalizedEmail || !password) {
+    if (
+      !firstName ||
+      !lastName ||
+      !normalizedEmail ||
+      !password ||
+      !normalizedCode
+    ) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 },
@@ -19,6 +29,7 @@ export async function POST(req: Request) {
     }
 
     await connectDB();
+    await ensureDefaultAdminUser();
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -28,6 +39,46 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+
+    const verificationRecord = await EmailVerificationCode.findOne({
+      email: normalizedEmail,
+      used: false,
+      expiresAt: { $gt: new Date() },
+    }).sort({ createdAt: -1 });
+
+    if (!verificationRecord) {
+      return NextResponse.json(
+        {
+          message:
+            "Verification code is missing or expired. Please request a new code.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const isCodeValid = await bcrypt.compare(
+      normalizedCode,
+      verificationRecord.codeHash,
+    );
+
+    if (!isCodeValid) {
+      const nextAttempts = (verificationRecord.attempts || 0) + 1;
+      verificationRecord.attempts = nextAttempts;
+      if (nextAttempts >= 5) {
+        verificationRecord.used = true;
+        verificationRecord.usedAt = new Date();
+      }
+      await verificationRecord.save();
+
+      return NextResponse.json(
+        { message: "Invalid verification code" },
+        { status: 400 },
+      );
+    }
+
+    verificationRecord.used = true;
+    verificationRecord.usedAt = new Date();
+    await verificationRecord.save();
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
