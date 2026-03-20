@@ -1,49 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-
-type Flashcard = {
-  front: string;
-  back: string;
-  keyword: string;
-};
+import { NextRequest } from "next/server";
+import { apiError, apiSuccess } from "@/lib/api/response";
+import { getUserIdFromRequest } from "@/lib/auth/user-id";
+import { AIPipelineInputError, generateFlashcards } from "@/lib/ai/service";
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  const userId = await getUserIdFromRequest(req);
 
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { text }: { text: string } = await req.json();
-
-  if (!text || typeof text !== "string") {
-    return NextResponse.json({ error: "No text provided" }, { status: 400 });
-  }
-
-  // ---------- BASIC FLASHCARD LOGIC ----------
-  const sentences: string[] = text
-    .split(".")
-    .map((s: string) => s.trim())
-    .filter((s: string) => s.length > 20);
-
-  const flashcards: Flashcard[] = [];
-
-  sentences.forEach((sentence: string, index: number) => {
-    const words: string[] = sentence.split(" ");
-
-    const keyword: string =
-      words.find((w: string) => w.length > 6 && /^[A-Za-z]+$/.test(w)) ??
-      `Concept ${index + 1}`;
-
-    flashcards.push({
-      front: `What is ${keyword}?`,
-      back: `${sentence}.`,
-      keyword,
+  if (!userId) {
+    return apiError({
+      message: "Unauthorized",
+      status: 401,
+      errorCode: "UNAUTHORIZED",
     });
-  });
+  }
 
-  return NextResponse.json({ flashcards });
+  try {
+    const { text }: { text: string } = await req.json();
+    const generated = await generateFlashcards({ text });
+
+    return apiSuccess(
+      {
+        flashcards: generated.flashcards,
+        generationMode: generated.telemetry.generationMode,
+        pipelineVersion: generated.telemetry.pipelineVersion,
+        retryCount: generated.telemetry.retryCount,
+        provider: generated.telemetry.provider,
+      },
+      "Flashcards generated",
+    );
+  } catch (error) {
+    if (error instanceof AIPipelineInputError) {
+      return apiError({
+        message: error.message,
+        status: 400,
+        errorCode: "INVALID_FLASHCARD_INPUT",
+      });
+    }
+
+    console.error("Flashcard generation error:", error);
+    return apiError({
+      message: "Failed to generate flashcards",
+      status: 500,
+      errorCode: "FLASHCARD_GENERATION_FAILED",
+    });
+  }
 }

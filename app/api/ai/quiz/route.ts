@@ -1,10 +1,7 @@
 import { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api/response";
 import { getUserIdFromRequest } from "@/lib/auth/user-id";
-import {
-  generateQuizQuestions,
-  QuizGenerationInputError,
-} from "@/lib/services/quiz-generator";
+import { AIPipelineInputError, generateQuiz } from "@/lib/ai/service";
 
 export async function POST(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
@@ -30,16 +27,25 @@ export async function POST(req: NextRequest) {
       questionType?: "multiple_choice" | "fill_in_blank";
     } = await req.json();
 
-    const questions = generateQuizQuestions({
+    const generated = await generateQuiz({
       text,
       difficulty,
       count,
       questionType,
     });
 
-    return apiSuccess({ questions }, "Quiz generated");
+    return apiSuccess(
+      {
+        questions: generated.questions,
+        generationMode: generated.telemetry.generationMode,
+        pipelineVersion: generated.telemetry.pipelineVersion,
+        retryCount: generated.telemetry.retryCount,
+        provider: generated.telemetry.provider,
+      },
+      "Quiz generated",
+    );
   } catch (err) {
-    if (err instanceof QuizGenerationInputError) {
+    if (err instanceof AIPipelineInputError) {
       return apiError({
         message: err.message,
         status: 400,

@@ -103,15 +103,27 @@ export async function GET(req: NextRequest) {
     .sort({ createdAt: -1 })
     .select("createdAt type title")
     .lean();
+  const recentGeneratedPromise = Result.find({ userId })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .select("createdAt type title")
+    .lean();
 
-  const [pdfCount, breakdown, quizStats, lastQuizAttempt, lastGenerated] =
-    await Promise.all([
-      pdfCountPromise,
-      breakdownPromise,
-      quizStatsPromise,
-      lastQuizAttemptPromise,
-      lastGeneratedPromise,
-    ]);
+  const [
+    pdfCount,
+    breakdown,
+    quizStats,
+    lastQuizAttempt,
+    lastGenerated,
+    recentGenerated,
+  ] = await Promise.all([
+    pdfCountPromise,
+    breakdownPromise,
+    quizStatsPromise,
+    lastQuizAttemptPromise,
+    lastGeneratedPromise,
+    recentGeneratedPromise,
+  ]);
 
   const latestQuizAttempt = lastQuizAttempt as {
     percentage?: number;
@@ -123,6 +135,17 @@ export async function GET(req: NextRequest) {
     type?: "reviewer" | "quiz" | "flashcards";
     createdAt?: string | Date;
   } | null;
+  const recentActivities = (
+    recentGenerated as Array<{
+      title?: string;
+      type?: "reviewer" | "quiz" | "flashcards";
+      createdAt?: string | Date;
+    }>
+  ).map((item) => ({
+    title: item.title,
+    type: item.type,
+    createdAt: item.createdAt,
+  }));
 
   const reviewerCount =
     breakdown.find((item) => item._id === "reviewer")?.count || 0;
@@ -152,5 +175,6 @@ export async function GET(req: NextRequest) {
           createdAt: recent.createdAt,
         }
       : null,
+    recentActivities,
   });
 }
