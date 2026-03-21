@@ -15,6 +15,7 @@ StudyMate AI is a full-stack AI-powered learning platform that transforms upload
 
 - [Project Overview](#project-overview)
 - [Screenshots](#screenshots)
+- [Mobile Screenshots](#mobile-screenshots)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
 - [Architecture Highlights](#architecture-highlights)
@@ -76,6 +77,33 @@ Users can:
 <img src="docs/images/results-flashcard-1.png" alt="Flashcard result output 1" width="100%" />
 <br />
 <img src="docs/images/results-flashcard-2.png" alt="Flashcard result output 2" width="100%" />
+
+## Mobile Screenshots
+
+<table>
+	<tr>
+		<td align="center" width="50%">
+			<img src="docs/images/home-mobile.png" alt="Home mobile view" width="220" />
+		</td>
+		<td align="center" width="50%">
+			<img src="docs/images/generate-mobile.png" alt="Generate mobile view" width="220" />
+		</td>
+	</tr>
+	<tr>
+		<td align="center" width="50%">
+			<img src="docs/images/upload-mobile.png" alt="Upload mobile view" width="220" />
+		</td>
+		<td align="center" width="50%">
+			<img src="docs/images/library-mobile.png" alt="Library mobile view" width="220" />
+		</td>
+	</tr>
+	<tr>
+		<td align="center" width="50%">
+			<img src="docs/images/results-mobile.png" alt="Results mobile view" width="220" />
+		</td>
+		<td align="center" width="50%"></td>
+	</tr>
+</table>
 
 ## Key Features
 
